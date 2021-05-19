@@ -1,0 +1,8 @@
+*.bak1
+*.bak2
+*.bak3
+*.png
+*.output
+.vscode/settings.json
+*.pyc
+GUI/csv/*.csv
