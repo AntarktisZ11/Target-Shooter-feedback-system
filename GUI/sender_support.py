@@ -53,7 +53,7 @@ def init(top, gui, *args, **kwargs):
     os.mkdir(csvfolder)
 
     global target
-    target = figureGen.Target([1,2,3, 4, 5, 51])
+    target = figureGen.Target([3, 4, 5, 51])
     # target = figureGen.Target([])
 
     # Create default image

@@ -72,7 +72,7 @@ class Target:
 						val = np.array([self.pointRange[i]]) # No segmentation
 						startangle = 90 + self.pointDisplayDir*(360/12) # To get the number in the right place
 					else:
-						color[-dir % 12] = self.getRingColor(i) # Set hit segment color "On"
+						color[-int(dir) % 12] = self.getRingColor(i) # Set hit segment color "On" | Typecast is only there to remove linting warning, does nothing
 				
 				# Create the ring
 				self.ax.pie(val, radius=size*(i+1), colors=color, autopct=lambda txt: self.func(val),
