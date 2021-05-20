@@ -6,3 +6,4 @@
 .vscode/settings.json
 *.pyc
 GUI/csv/*.csv
+*.tcl#

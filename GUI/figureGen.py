@@ -141,11 +141,11 @@ class Target:
 		figManager.full_screen_toggle()
 		plt.show() # Display all figures
 	
-	def saveFigure(self):
+	def saveFigure(self, dpi=100):
 		self.ax.set(aspect="equal")
 		my_path = os.path.dirname(os.path.abspath(__file__))
 		my_file = 'test.png'
-		self.fig.savefig(os.path.join(my_path, my_file) , dpi=100)
+		self.fig.savefig(os.path.join(my_path, my_file) , dpi=dpi)
 		# self.fig.savefig('C:/Users/marcu/Desktop/Python Projects/L-O/GUI/test.png', dpi=100)
 		# plt.pause(100)
 		plt.close('all')
@@ -161,16 +161,16 @@ if __name__ == "__main__":
 	# target2.showFullscreen()
 	# -------------------------------------
 
-	# target.default()
-	target.targetHit(4)
-	# target.targetHit(3,2)
+	# target.default(1.4)
+	# target.targetHit(4, totalSize=1.4)
+	# target.targetHit(3,2, totalSize=1.4)
 	# target.targetHit(4,8)
 	# target.targetHit("T",3)
 	# target.targetHit("0",12)
-	# target.targetHit("X",2)
+	target.targetHit("X",2, totalSize=1.4)
 
 	# target1.showFullscreen()
-	target.saveFigure()
+	target.saveFigure(170)
 	# target.showFullscreen()
 	# target1.targetHit("x")
 	# target.showFullscreen()
