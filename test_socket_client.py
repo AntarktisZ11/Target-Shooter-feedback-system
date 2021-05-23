@@ -21,7 +21,7 @@ while True:
         buffer = StringIO()
         s.recv_into(buffer)
         print(buffer.getvalue())
-        df = pd.read_csv(buffer)
+        df = pd.read_csv(pickle.loads(buffer))
         print(df)
     else:
         reply = s.recv(1024).decode()
