@@ -1,7 +1,8 @@
 
 TODO - Ping?
 
-It is threaded but does not use lock (which would prevent bad instruction splitting "https://medium.com/python-features/using-locks-to-prevent-data-races-in-threads-in-python-b03dfcfbadd6")
+# It is threaded but does not use lock (which would prevent bad instruction splitting "https://medium.com/python-features/using-locks-to-prevent-data-races-in-threads-in-python-b03dfcfbadd6")
+Use non-blocking recv?
 
 Packet prefix
     --  Packet size (type: uint)    - 2 bytes
