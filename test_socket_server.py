@@ -1,5 +1,4 @@
 import socket
-from numpy import diag_indices_from
 import pandas as pd
 import pickle
 from io import StringIO
@@ -20,27 +19,40 @@ print(df)
 df_bytes = pickle.dumps(df)
 print(df_bytes.__sizeof__())
 
+def listen():
+    s.listen(1)
+    print("Socket awaitning connection")
+    global conn, addr
+    (conn, addr) = s.accept()
+    print("Connected")
 
-s.listen(1)
-print("Socket awaitning messages")
-(conn, addr) = s.accept()
-print("Connected")
+def main():
+    listen()
+    while True:
+        try:
+            data = conn.recv(1024).decode()
+            print("I sent a message back in response to: " + data)
+        except ConnectionResetError as e:
+            print(e)
+            main()
 
+        if data == 'break':
+            conn.sendall("Breaking connection".encode())
+            print("Breaking connection")
+            conn.close()
+            break
+        elif data == 'df':
+            conn.sendall(df_bytes)
+        elif data == 'df_csv':
+            buffer = StringIO() # Behaves as a txt file but in memory
+            df.to_csv(buffer)
+            df_pickled = pickle.dumps(buffer)
+            print(df_pickled.__sizeof__())
+            conn.sendall(df_pickled)
+        else:
+            reply = "Hello, world!"
+            conn.sendall(reply.encode())
+    
 
-while True:
-    data = conn.recv(1024).decode()
-    print("I sent a message back in response to: " + data)
-
-    if data == 'break':
-        conn.sendall("Breaking connection".encode())
-        break
-    elif data == 'df':
-        conn.sendall(df_bytes)
-    elif data == 'df_csv':
-        buffer = StringIO()
-        df.to_csv(buffer)
-        conn.sendfile(buffer.getvalue())
-    else:
-        reply = "Hello, world!"
-        conn.sendall(reply.encode())
-conn.close()
+if __name__ == '__main__':
+    main()
