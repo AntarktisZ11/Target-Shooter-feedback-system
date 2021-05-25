@@ -54,13 +54,16 @@ def init(top, gui, *args, **kwargs):
 
     global target
     target = figureGen.Target([3, 4, 5, 51])
-    # target = figureGen.Target([])
 
     # Create default image
     update_img(None,None, True)
 
     global log
     log = pd.DataFrame(columns=['Name', 'Style', 'Point', 'Clock'])
+
+    global users
+    users = ['Per Persson','Johan Johansson','Sven Svensson']
+    w.TCombobox1.configure(values=users)
 
     global radios
     radios = {'St': w.Radiobutton1,
@@ -82,27 +85,29 @@ def init(top, gui, *args, **kwargs):
     for column in ['St', 'J', 'L', 'D']:
         radios[column].configure(state='disabled')
 
-    # w.Radiobutton1.configure(state='disabled')
-    # w.Radiobutton2.configure(state='disabled')
-    # w.Radiobutton3.configure(state='disabled')
-    # w.Radiobutton4.configure(state='disabled')
-    
+
     # --- End of init edit ---
 
-def delete_item(_):
-    index = w.Listbox1.curselection()
+def delete_item(_, latest=False):
+    if  latest:
+        selectedButton.get()
+        index = (0,)
+    else:
+        index = w.Listbox1.curselection()
+        print(index)
+
     global log
     try:
         entry = log.iloc[index[0], :]
     except IndexError:
         print("No item selected to delete in listbox")
         return
+
     if entry['Name'] in [None, '']:
         pass
     else:
         filename = os.path.join(prog_location, "csv", str(entry['Name'])+".csv")
         df_from_csv = pd.read_csv(filename, squeeze=True, dtype='str')
-        # row = 3 - df_from_csv[entry['Style']].isnull().sum()
         row = df_from_csv[df_from_csv[entry['Style']] == entry['Point']].last_valid_index()
         df_from_csv.at[row, entry['Style']] = np.nan
         df_from_csv.to_csv(filename, index=False)
@@ -129,17 +134,12 @@ def add_item(point, clock=None):
 
         column = ['St', 'J', 'L', 'D'][selectedButton.get()-1]
         row = pd.isnull(df_from_csv[column]).to_numpy().nonzero()[0][0]
-        # temp = 
-        # temp2 = df_from_csv[df_from_csv[column].fillna(value=0) == '0']
-        # row = temp2.first_valid_index()
-        # if row == None:
-        #     row = 0
         print(row)
 
         df_from_csv.at[row, column] = point
         df_from_csv.to_csv(filename, index=False)
 
-        if row + 1 == 4:
+        if not df_from_csv[column].isnull().values.any(): # If column is full
             w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
             w.Entry_Point.delete(0, 'end') # Removes 
             update_radiobuttons()
@@ -179,10 +179,6 @@ def update_radiobuttons():
 
     for column in columns:
         radios[column].configure(state='disabled')
-    # w.Radiobutton1.configure(state='disabled')
-    # w.Radiobutton2.configure(state='disabled')
-    # w.Radiobutton3.configure(state='disabled')
-    # w.Radiobutton4.configure(state='disabled')
     selectedButton.set(0)
 
     if name != '':
@@ -194,28 +190,12 @@ def update_radiobuttons():
             df.to_csv(filename, index=False)
             for column in columns:
                 radios[column].configure(state='normal')
-            # w.Radiobutton1.configure(state='normal')
-            # w.Radiobutton2.configure(state='normal')
-            # w.Radiobutton3.configure(state='normal')
-            # w.Radiobutton4.configure(state='normal')
-            # w.Entry_Point.configure(state='normal')
         else:
             from_csv = pd.read_csv(filename, squeeze=True)
-            # if from_csv.isnull().values.any():
-            #     w.Entry_Point.configure(state='normal')
-            # else:
-            #     w.Entry_Point.configure(state='disabled')
-            #     return
 
             for column in columns:
                 if from_csv[column].isnull().values.any():
                     radios[column].configure(state='normal')
-            # if from_csv['J'].isnull().values.any():
-            #     w.Radiobutton2.configure(state='normal')
-            # if from_csv['L'].isnull().values.any():
-            #     w.Radiobutton3.configure(state='normal')
-            # if from_csv['D'].isnull().values.any():
-            #     w.Radiobutton4.configure(state='normal')
             
             if selectedButton.get() == 0:
                 w.Entry_Point.configure(state='disabled')
@@ -224,8 +204,6 @@ def allow_entry():
     w.Entry_Point.configure(state='normal')
     w.Entry_Point.bind('<Key-Return>', point_entry)
     w.Entry_Point.focus()
-    # if selectedButton.get() == -1:
-    #     w.Entry_Point.configure(state='disabled')
 
 def _dummy(_):
     pass
@@ -288,7 +266,7 @@ def point_entry(_, update=True):
         return False
     return True
 
-def update_img(point=4, clock=None, defaultImg=False):
+def update_img(point, clock=None, defaultImg=False):
     if defaultImg:
         target.default()
     else:
@@ -297,14 +275,13 @@ def update_img(point=4, clock=None, defaultImg=False):
         except:
             target.targetHit(point, clock)
     target.saveFigure()
-    photo_location = os.path.join(prog_location,"./test.png")
+    photo_location = os.path.join(prog_location,"./image.png")
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
     w.Label1.configure(image=_img0)
 
 def open_print_window():
     print('sender_support.open_print_window')
-    # print(free_mode_check.get())
     sys.stdout.flush()
 
 def free_mode():
@@ -316,6 +293,9 @@ def free_mode():
         allow_entry()
     else:
         w.TCombobox1.configure(state='readonly')
+        w.Entry_Point.configure(state='disabled')
+        w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
+        # w.Entry_Point.delete(0, 'end') # Removes
     update_radiobuttons()
 
 

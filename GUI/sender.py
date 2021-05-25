@@ -11,6 +11,7 @@ try:
     import Tkinter as tk
 except ImportError:
     import tkinter as tk
+    import tkinter.font as Tkfont
 
 try:
     import ttk
@@ -57,6 +58,10 @@ class Toplevel1:
         _compcolor = '#d9d9d9' # X11 color: 'gray85'
         _ana1color = '#d9d9d9' # X11 color: 'gray85'
         _ana2color = '#ececec' # Closest X11 color: 'gray92'
+        default_font = Tkfont.nametofont("TkDefaultFont")
+        default_font.configure(size=11)
+
+        root.option_add("*Font", default_font)
         self.style = ttk.Style()
         if sys.platform == "win32":
             self.style.theme_use('winnative')
@@ -111,7 +116,7 @@ class Toplevel1:
         self.Entry_Point.place(x=40, y=170, height=20, width=64)
         self.Entry_Point.configure(background="white")
         self.Entry_Point.configure(disabledforeground="#a3a3a3")
-        self.Entry_Point.configure(font="TkFixedFont")
+        # self.Entry_Point.configure(font="TkFixedFont")
         self.Entry_Point.configure(foreground="#000000")
         self.Entry_Point.configure(highlightbackground="#d9d9d9")
         self.Entry_Point.configure(highlightcolor="black")
@@ -125,7 +130,7 @@ class Toplevel1:
         self.Entry_Clock.place(x=140, y=170, height=20, width=64)
         self.Entry_Clock.configure(background="white")
         self.Entry_Clock.configure(disabledforeground="#a3a3a3")
-        self.Entry_Clock.configure(font="TkFixedFont")
+        # self.Entry_Clock.configure(font="TkFixedFont")
         self.Entry_Clock.configure(foreground="#000000")
         self.Entry_Clock.configure(highlightbackground="#d9d9d9")
         self.Entry_Clock.configure(highlightcolor="black")
@@ -221,9 +226,9 @@ class Toplevel1:
         self.Radiobutton4.configure(variable=sender_support.selectedButton)
 
         self.TCombobox1 = ttk.Combobox(top)
-        self.TCombobox1.place(x=80, y=20, height=21, width=143)
-        self.value_list = ['Per Persson','Johan Johansson','Sven Svensson',]
-        self.TCombobox1.configure(values=self.value_list)
+        self.TCombobox1.place(x=80, y=20, height=28, width=143)
+        # self.value_list = ['Per Persson','Johan Johansson','Sven Svensson',]
+        # self.TCombobox1.configure(values=self.value_list)
         self.TCombobox1.configure(state='readonly')
         self.TCombobox1.configure(takefocus="0")
         self.TCombobox1.bind('<FocusIn>',sender_support._from_combobox)
@@ -232,7 +237,7 @@ class Toplevel1:
         self.Listbox1.place(x=30, y=230, height=102, width=184)
         self.Listbox1.configure(background="white")
         self.Listbox1.configure(disabledforeground="#a3a3a3")
-        self.Listbox1.configure(font="TkFixedFont")
+        # self.Listbox1.configure(font="TkFixedFont")
         self.Listbox1.configure(foreground="#000000")
         self.Listbox1.configure(highlightbackground="#d9d9d9")
         self.Listbox1.configure(highlightcolor="black")
@@ -265,18 +270,18 @@ class Toplevel1:
         self.Label_ClockError.configure(highlightcolor="black")
         self.Label_ClockError.configure(text='''Invalid''')
 
-        self.Button_UpdateImg = tk.Button(top)
-        self.Button_UpdateImg.place(x=130, y=350, height=24, width=73)
-        self.Button_UpdateImg.configure(activebackground="#ececec")
-        self.Button_UpdateImg.configure(activeforeground="#000000")
-        self.Button_UpdateImg.configure(background="#d9d9d9")
-        self.Button_UpdateImg.configure(command=sender_support.update_img)
-        self.Button_UpdateImg.configure(disabledforeground="#a3a3a3")
-        self.Button_UpdateImg.configure(foreground="#000000")
-        self.Button_UpdateImg.configure(highlightbackground="#d9d9d9")
-        self.Button_UpdateImg.configure(highlightcolor="black")
-        self.Button_UpdateImg.configure(pady="0")
-        self.Button_UpdateImg.configure(text='''Update Img''')
+        self.Button_Undo = tk.Button(top)
+        self.Button_Undo.place(x=130, y=350, height=24, width=73)
+        self.Button_Undo.configure(activebackground="#ececec")
+        self.Button_Undo.configure(activeforeground="#000000")
+        self.Button_Undo.configure(background="#d9d9d9")
+        self.Button_Undo.configure(command= lambda: sender_support.delete_item("doesNothing", True))
+        self.Button_Undo.configure(disabledforeground="#a3a3a3")
+        self.Button_Undo.configure(foreground="#000000")
+        self.Button_Undo.configure(highlightbackground="#d9d9d9")
+        self.Button_Undo.configure(highlightcolor="black")
+        self.Button_Undo.configure(pady="0")
+        self.Button_Undo.configure(text='''Ångra''')
 
         self.Exit = tk.Button(top)
         self.Exit.place(x=40, y=350, height=24, width=30)
