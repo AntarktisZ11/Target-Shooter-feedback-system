@@ -112,7 +112,7 @@ class Toplevel1:
         self.Label2.configure(foreground="#000000")
         self.Label2.configure(highlightbackground="#d9d9d9")
         self.Label2.configure(highlightcolor="black")
-        photo_location = os.path.join(prog_location,"./test.png")
+        photo_location = os.path.join(prog_location,"./image.png")
         global _img0
         _img0 = tk.PhotoImage(file=photo_location)
         self.Label2.configure(image=_img0)

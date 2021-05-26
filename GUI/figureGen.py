@@ -144,7 +144,7 @@ class Target:
 	def saveFigure(self, dpi=100):
 		self.ax.set(aspect="equal")
 		my_path = os.path.dirname(os.path.abspath(__file__))
-		my_file = 'test.png'
+		my_file = 'image.png'
 		self.fig.savefig(os.path.join(my_path, my_file) , dpi=dpi)
 		# self.fig.savefig('C:/Users/marcu/Desktop/Python Projects/L-O/GUI/test.png', dpi=100)
 		# plt.pause(100)
