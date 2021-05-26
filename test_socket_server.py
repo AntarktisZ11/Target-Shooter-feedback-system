@@ -1,8 +1,8 @@
+import time
 import socket
 import pandas as pd
 import pickle
 from io import StringIO
-import threading
 import select
 
 HOST = '192.168.1.4'
@@ -37,6 +37,23 @@ def listen():
     print("Connected")
 
 
+def reply(data, data_info):
+    data_info = data_info.lower()
+    if len(str(data_info)) != 8:
+        raise ValueError("Data_info has to be 8 characters, was: " + str(len(data_info)))
+    size = len(data) + len(data_info) + 2   # 2 is for "packet_len"
+    MAX_BYTE = int(0xFF)
+    packet_len = bytes([size//MAX_BYTE, size % MAX_BYTE]) # Returns two bytes to store the packet size excluding bytes for TCP protocoll
+    prefix = packet_len + data_info.encode()
+    print(len(data + prefix))
+    try:
+        conn.sendall(prefix + data)
+    except (ConnectionResetError, ConnectionAbortedError) as e:
+        print(e)
+        listen()
+        reply(data, data_info)
+
+
 def main():
     i=0
     listen()
@@ -44,29 +61,28 @@ def main():
         r,w,e = select.select([conn], [], [], 0.2)
         if r:
             try:
-                data = conn.recv(1024).decode()
-                # print("I sent a message back in response to: " + data)
-            except ConnectionResetError as e:
+                msg = conn.recv(1024).decode()
+                print("I sent a message back in response to: " + msg)
+            except (ConnectionResetError, ConnectionAbortedError) as e:
                 print(e)
                 main()
             
 
-            if data == 'break':
-                conn.sendall("Breaking connection".encode())
+            if msg == 'break':
+                reply("Breaking connection".encode(), "Breaking")
                 print("Breaking connection")
+                time.sleep(2)
                 conn.close()
                 return
-            elif data == 'df':
-                conn.sendall(df_bytes)
-            elif data == 'df_csv':
+            elif msg == 'df':
+                reply(df_bytes, "DataFram")
+                reply(df_bytes, "DataFram")
+            elif msg == 'df_csv':
                 buffer = StringIO() # Behaves as a txt file but in memory
                 df.to_csv(buffer)
-                df_pickled = pickle.dumps(buffer)
-                print(df_pickled.__sizeof__())
-                conn.sendall(df_pickled)
+                reply(pickle.dumps(buffer), "df_csv  ")
             else:
-                reply = "Hello, world!"
-                conn.sendall(reply.encode())
+                reply("Hello, world!".encode(), "Greeting")
 
         i += 1
         print('/-\|'[i%4]+'\r',end='',flush=True)
