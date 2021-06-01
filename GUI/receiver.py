@@ -38,9 +38,6 @@ def create_Toplevel1(rt, *args, **kwargs):
     '''Starting point when module is imported by another module.
        Correct form of call: 'create_Toplevel1(root, *args, **kwargs)' .'''
     global w, w_win, root
-    global prog_location
-    prog_call = sys.argv[0]
-    prog_location = os.path.split(prog_call)[0]
     #rt = root
     root = rt
     w = tk.Toplevel (root)
@@ -103,20 +100,16 @@ class Toplevel1:
         self.Frame1.configure(highlightbackground="#d9d9d9")
         self.Frame1.configure(highlightcolor="black")
 
-        self.Label2 = tk.Label(self.Frame1)
-        self.Label2.place(x=9, y=8, height=814, width=931)
-        self.Label2.configure(activebackground="#f9f9f9")
-        self.Label2.configure(activeforeground="black")
-        self.Label2.configure(background="#d9d9d9")
-        self.Label2.configure(disabledforeground="#a3a3a3")
-        self.Label2.configure(foreground="#000000")
-        self.Label2.configure(highlightbackground="#d9d9d9")
-        self.Label2.configure(highlightcolor="black")
-        photo_location = os.path.join(prog_location,"./image.png")
-        global _img0
-        _img0 = tk.PhotoImage(file=photo_location)
-        self.Label2.configure(image=_img0)
-        self.Label2.configure(text='''Label''')
+        self.Image = tk.Label(self.Frame1)
+        self.Image.place(x=9, y=8, height=814, width=931)
+        self.Image.configure(activebackground="#f9f9f9")
+        self.Image.configure(activeforeground="black")
+        self.Image.configure(background="#d9d9d9")
+        self.Image.configure(disabledforeground="#a3a3a3")
+        self.Image.configure(foreground="#000000")
+        self.Image.configure(highlightbackground="#d9d9d9")
+        self.Image.configure(highlightcolor="black")
+        self.Image.configure(text='''Bild''')
 
 if __name__ == '__main__':
     vp_start_gui()

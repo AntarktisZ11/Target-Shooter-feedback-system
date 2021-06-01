@@ -2,10 +2,10 @@
 TODO - Ping?
 
 # It is threaded but does not use lock (which would prevent bad instruction splitting "https://medium.com/python-features/using-locks-to-prevent-data-races-in-threads-in-python-b03dfcfbadd6")
-Use non-blocking recv?
+Uses non-blocking socket with select
 
 Packet prefix
-    --  Packet size (type: uint)    - 2 bytes
+    --  Packet size (type: int)    - 2 bytes
     --  Packet type (type: string)  - 8 Bytes
 
 -   Marker (host) sends - When changed user, item deleted/added

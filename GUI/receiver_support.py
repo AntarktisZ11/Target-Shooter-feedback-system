@@ -6,24 +6,181 @@
 #    May 20, 2021 03:37:04 AM CEST  platform: Windows NT
 
 import sys
+import os
+import figureGen
+import pandas as pd
+import socket
+import select
+import pickle
+from io import StringIO
+import time
+import tkinter as tk
+import tkinter.font as Tkfont
+import tkinter.ttk as ttk
+    
 
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
 
 def init(top, gui, *args, **kwargs):
     global w, top_level, root
     w = gui
     top_level = top
     root = top
+
+    # --- Start of init edit ---
+    global prog_location
+    prog_call = sys.argv[0]
+    prog_location = os.path.split(prog_call)[0]
+
+    global target
+    target = figureGen.Target([3, 4, 5, 51], totalSize=1.25)
+
+    global HOST, PORT
+    HOST = '192.168.1.4'
+    PORT = 12345
+
+    # Create default image
+    update_img(point=None, defaultImg=True)
+
+    root.after(2000, socket_connect)
+
+
+    # --- End of init edit ---
+
+
+
+
+def update_img(point, clock=None, defaultImg=False):
+    if defaultImg:
+        target.default()
+    else:
+        try:
+            target.targetHit(int(point), clock)
+        except:
+            target.targetHit(point, clock)
+    target.saveFigure(dpi=180)
+    photo_location = os.path.join(prog_location,"./image.png")
+    global _img0
+    _img0 = tk.PhotoImage(file=photo_location)
+    w.Image.configure(image=_img0)
+
+    root.update()   #! This might not be needed
+    time.sleep(1.5) #! Image stays for at least 1.5s before changing
+
+"""
+    Begining of socket functions
+"""
+def socket_connect():
+    global s
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    open_popup()
+    while True:
+        try:
+            s.connect((HOST, PORT))
+            s.setblocking(0)
+            break
+        except TimeoutError:
+            print("Waiting to connect!")
+    print("Connected")
+    close_popup()
+    root.after(2000, socket_recive)
+
+def socket_send(data, data_info):
+    data_info = data_info.lower()
+    if len(str(data_info)) > 8:
+        raise ValueError("Data_info has to be max 8 characters, was: " + str(len(data_info)))
+    data_info = f'{data_info: <8}'
+
+    size = len(data) + len(data_info) + 2   # 2 is for "packet_len"
+    FULL_BYTE = int(0xFF)
+    packet_len = bytes([size//FULL_BYTE, size % FULL_BYTE]) # Returns two bytes to store the packet size excluding bytes for TCP protocoll
+    prefix = packet_len + data_info.encode()
+    print(len(prefix + data))
+    try:
+        s.sendall(prefix + data)
+    except (ConnectionResetError, ConnectionAbortedError) as e:
+        print(e)
+        socket_connect()
+        socket_send(data, data_info)
+
+def socket_recive():
+    print("Reciveing")
+    FULL_BYTE = int(0xFF)
+    msg = b''
+    msg_list = []
+    length = 0
+    while True:
+        r,w,e = select.select([s], [], [], 0.2)
+        if r:
+            try:
+                msg += s.recv(2048)
+            except (ConnectionResetError, ConnectionAbortedError) as e:
+                print(e)
+                socket_connect()
+            if len(msg) >= 2 and not length:
+                length = int(msg[0])*FULL_BYTE + int(msg[1]) # Convert first 2 bytes to decimal
+                print(length)
+            if len(msg) >= length and length:
+                data_info = msg[2:10]
+                data = msg[10:length]
+                msg_list.append((data, data_info.decode().strip()))
+                msg = msg[length:]
+                length = 0
+                time.sleep(0.5)
+        else:
+            root.after(2000, socket_recive)
+            act_on_msg(msg_list)
+            # return msg_list
+            return
+
+def act_on_msg(msg_list):
+    while msg_list:
+        pickled_data, data_info = msg_list.pop(0)
+        if data_info == "shooter":
+            data = pickle.loads(pickled_data)
+            data.seek(0)
+            shooter_df = pd.read_csv(data, index_col=0)
+            print(shooter_df)
+        elif data_info == "log_df":
+            data = pickle.loads(pickled_data)
+            data.seek(0)
+            log_df = pd.read_csv(data, index_col=0)
+            print(log_df)
+        elif data_info == "new_hit":
+            point, clock = pickle.loads(pickled_data)
+            update_img(point, clock)
+        else:
+            print("Unrecognizeable info: " + data_info)
+            print("Was carrying this data: " + str(pickled_data))
+
+
+"""
+    End of socket functions
+"""
+
+class Popup(tk.Toplevel):
+    """modal window requires a master"""
+    def __init__(self, master, **kwargs):
+        tk.Toplevel.__init__(self, master, **kwargs)
+        # self.overrideredirect(True)
+        self.geometry('320x150+500+500') # set the position and size of the popup
+
+        lbl = tk.Label(self, text="Försöker koppla til markördatorn ... ", font=("Segoe UI", 11, "bold"))
+        lbl.place(relx=.5, rely=.5, anchor='c')
+        self.title("Connecting...")
+
+        # The following commands keep the popup on top.
+        # Remove these if you want a program with 2 responding windows.
+        # These commands must be at the end of __init__
+        self.transient(master) # set to be on top of the main window
+        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
+
+def open_popup():
+    root.popup = Popup(root)
+    root.update()
+
+def close_popup():
+    root.popup.destroy()
+
 
 def destroy_window():
     # Function which closes the window.

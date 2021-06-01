@@ -5,13 +5,14 @@ import os
 
 
 class Target:
-	def __init__(self, pointRange, pointDisplayDir=3):
+	def __init__(self, pointRange, pointDisplayDir=3, totalSize=1):
 		# Org pointRange order: [low, ..., high]
 		self.pointRange = pointRange
 		self.pointRange.reverse()
 		# New pointRange order: [high, ..., low]
 
 		self.pointDisplayDir = pointDisplayDir # The direction of ring point text (1-12)
+		self.totalSize = totalSize
 		
 		self.wedgeNr = 0
 		self.cmap = plt.get_cmap("Set1") # Set colormap
@@ -42,8 +43,10 @@ class Target:
 		return [0.8, 0, 0, 0.9]
 
 	# Create full target plot
-	def targetHit(self, point, dir=None, totalSize=1):
+	def targetHit(self, point, dir=None):
 		self.fig, self.ax = plt.subplots()
+
+		totalSize = self.totalSize
 
 		# Set outer clock numbers
 		self.ax.pie(np.full(12, 1), radius=totalSize, wedgeprops=dict(width=0), startangle=75,
@@ -113,8 +116,10 @@ class Target:
 	
 
 	# Only for first image
-	def default(self, totalSize=1):
+	def default(self):
 		self.fig, self.ax = plt.subplots()
+
+		totalSize = self.totalSize
 
 		self.ax.pie(np.full(12, 1), radius=totalSize, wedgeprops=dict(width=0), startangle=75,
 		labels=[' 12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2','1'])
