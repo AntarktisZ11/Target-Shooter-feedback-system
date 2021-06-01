@@ -245,6 +245,7 @@ class Toplevel1:
         self.Listbox1.configure(selectforeground="white")
         self.Listbox1.configure(takefocus="0")
         self.Listbox1.bind('<Key-Delete>',sender_support.delete_item)
+        self.Listbox1.bind('<Key-BackSpace>',sender_support.delete_item)
 
         self.Label_PointError = tk.Label(top)
         self.Label_PointError.place(x=40, y=190, height=21, width=64)
