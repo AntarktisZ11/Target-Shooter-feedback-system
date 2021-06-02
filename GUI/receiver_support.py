@@ -55,7 +55,7 @@ def update_img(point, clock=None, defaultImg=False):
     else:
         try:
             target.targetHit(int(point), clock)
-        except:
+        except ValueError:
             target.targetHit(point, clock)
     target.saveFigure(dpi=180)
     photo_location = os.path.join(prog_location,"./image.png")
@@ -63,8 +63,8 @@ def update_img(point, clock=None, defaultImg=False):
     _img0 = tk.PhotoImage(file=photo_location)
     w.Image.configure(image=_img0)
 
-    root.update()   #! This might not be needed
-    time.sleep(1.5) #! Image stays for at least 1.5s before changing
+    # root.update()   #! This might not be needed
+    # time.sleep(1.5) #! Image stays for at least 1.5s before changing
 
 """
     Begining of socket functions
@@ -103,7 +103,7 @@ def socket_send(data, data_info):
         socket_send(data, data_info)
 
 def socket_recive():
-    print("Reciveing")
+    # print("Reciveing")
     FULL_BYTE = int(0xFF)
     msg = b''
     msg_list = []
@@ -116,7 +116,8 @@ def socket_recive():
             except (ConnectionResetError, ConnectionAbortedError) as e:
                 print(e)
                 socket_connect()
-            if len(msg) >= 2 and not length:
+        if len(msg) >= 2:
+            if length == 0:
                 length = int(msg[0])*FULL_BYTE + int(msg[1]) # Convert first 2 bytes to decimal
                 print(length)
             if len(msg) >= length and length:
@@ -125,9 +126,8 @@ def socket_recive():
                 msg_list.append((data, data_info.decode().strip()))
                 msg = msg[length:]
                 length = 0
-                time.sleep(0.5)
-        else:
-            root.after(2000, socket_recive)
+        if not len(msg):
+            root.after(500, socket_recive)
             act_on_msg(msg_list)
             # return msg_list
             return
@@ -147,7 +147,10 @@ def act_on_msg(msg_list):
             print(log_df)
         elif data_info == "new_hit":
             point, clock = pickle.loads(pickled_data)
-            update_img(point, clock)
+            if clock is None:
+                update_img(point)
+            else:
+                update_img(point, int(clock))
         else:
             print("Unrecognizeable info: " + data_info)
             print("Was carrying this data: " + str(pickled_data))
