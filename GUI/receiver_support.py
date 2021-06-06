@@ -14,6 +14,7 @@ import select
 import pickle
 from io import StringIO
 import time
+import datetime
 import tkinter as tk
 import tkinter.font as Tkfont
 import tkinter.ttk as ttk
@@ -41,9 +42,12 @@ def init(top, gui, *args, **kwargs):
     # Create default image
     update_img(point=None, defaultImg=True)
 
+    root.bind('<Tab>', lambda e: open_input("shooter name"))
+
     root.after(2000, socket_connect)
 
-
+    # root.after(500, open_input, "shooter name")
+    # root.after(500, open_input, "date")
     # --- End of init edit ---
 
 
@@ -63,12 +67,13 @@ def update_img(point, clock=None, defaultImg=False):
     _img0 = tk.PhotoImage(file=photo_location)
     w.Image.configure(image=_img0)
 
-    # root.update()   #! This might not be needed
-    # time.sleep(1.5) #! Image stays for at least 1.5s before changing
+    root.update()   #! This might not be needed
+    root.after(3000) #! Image stays for at least 1.5s before changing
 
 """
     Begining of socket functions
 """
+
 def socket_connect():
     global s
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -82,7 +87,10 @@ def socket_connect():
             print("Waiting to connect!")
     print("Connected")
     close_popup()
+    root.after(300, open_input, "shooter leader name")
     root.after(2000, socket_recive)
+    root.after(5000, ping)
+
 
 def socket_send(data, data_info):
     data_info = data_info.lower()
@@ -102,63 +110,135 @@ def socket_send(data, data_info):
         socket_connect()
         socket_send(data, data_info)
 
+
 def socket_recive():
     # print("Reciveing")
     FULL_BYTE = int(0xFF)
     msg = b''
     msg_list = []
     length = 0
+    has_read = False
     while True:
         r,w,e = select.select([s], [], [], 0.2)
         if r:
             try:
                 msg += s.recv(2048)
+                has_read = True
             except (ConnectionResetError, ConnectionAbortedError) as e:
                 print(e)
                 socket_connect()
+
         if len(msg) >= 2:
+
             if length == 0:
                 length = int(msg[0])*FULL_BYTE + int(msg[1]) # Convert first 2 bytes to decimal
                 print(length)
+
             if len(msg) >= length and length:
                 data_info = msg[2:10]
                 data = msg[10:length]
                 msg_list.append((data, data_info.decode().strip()))
                 msg = msg[length:]
                 length = 0
+
         if not len(msg):
             root.after(500, socket_recive)
-            act_on_msg(msg_list)
-            # return msg_list
+            if has_read:
+                act_on_msg(msg_list)
             return
+
+def ping():
+    socket_send(b'', "ping")
+    root.after(5000, ping)
+
+"""
+    End of socket functions
+"""
 
 def act_on_msg(msg_list):
     while msg_list:
         pickled_data, data_info = msg_list.pop(0)
-        if data_info == "shooter":
+
+        if data_info == "name":
+            name = pickled_data.decode()
+            w.shooter_lables[0].configure(text=name)
+
+        elif data_info == "shooter":
             data = pickle.loads(pickled_data)
             data.seek(0)
             shooter_df = pd.read_csv(data, index_col=0)
-            print(shooter_df)
+            print(shooter_df)            
+
+            row_list = format_dataframe(shooter_df)
+            i=0
+            for label in w.shooter_lables[1:]:
+                txt = row_list[i]
+                label.configure(text=txt)
+                i += 1
+
         elif data_info == "log_df":
             data = pickle.loads(pickled_data)
             data.seek(0)
             log_df = pd.read_csv(data, index_col=0)
             print(log_df)
+            fill_listbox(log_df)
+
         elif data_info == "new_hit":
             point, clock = pickle.loads(pickled_data)
             if clock is None:
                 update_img(point)
             else:
                 update_img(point, int(clock))
+
         else:
             print("Unrecognizeable info: " + data_info)
             print("Was carrying this data: " + str(pickled_data))
 
 
-"""
-    End of socket functions
-"""
+def format_dataframe(df):
+    df = df.fillna('-')
+    for key in ['St', 'J', 'L', 'D']:
+        df[key] = df[key].astype(str)
+        df[key] = df[key].str.split('.')
+        df[key] = df[key].str[0]
+
+    row_list = pd.DataFrame(df).to_string(
+        index=False,
+        justify='center',
+        formatters={
+            "St": "{:^5}".format,
+            "J": "{:^5}".format,
+            "L": "{:^5}".format,
+            "D": "{:^5}".format,
+        }
+        ).splitlines()
+    return row_list
+
+
+def fill_listbox(df):
+    w.Listbox1.delete(0,'end')
+    df = df.where(pd.notnull(df), None)
+    for row in df.values:
+        name = row[0]
+        style = row[1]
+        point = str(row[2])
+        clock = row[3]
+
+        if name == None:
+            if clock == None:
+                string = point
+            else:
+                string = "{} kl {:.0f}".format(point, clock)
+        else:
+            if clock == None:
+                string = "{}: [{}] {}".format(name.split()[0], style, point)
+            else:
+                string = "{}: [{}] {} kl {:.0f}".format(name.split()[0], style, point, clock)
+        w.Listbox1.insert('end', string)
+    w.Listbox1.see(0)
+
+
+
 
 class Popup(tk.Toplevel):
     """modal window requires a master"""
@@ -183,6 +263,73 @@ def open_popup():
 
 def close_popup():
     root.popup.destroy()
+
+
+class InputPopup(tk.Toplevel):
+    """modal window requires a master"""
+    def __init__(self, master, input_type, **kwargs):
+        tk.Toplevel.__init__(self, master, **kwargs)
+        self.geometry('320x150+500+500')
+        self.title("Connecting...")
+
+        self.input_type = input_type
+
+        self.lbl = tk.Label(self, font=("Segoe UI", 11))
+        self.lbl.place(relx=.5, rely=.3, anchor='c')
+
+        self.entry = tk.Entry(self)
+        self.entry.place(relx=.5, rely=.6, anchor='c')
+        self.entry.bind('<Key-Return>', self.verify_entry)
+        self.entry.focus()
+
+        if input_type == "shooter name":
+            self.lbl.configure(text="Mata in namn, tex. (John Doe)")
+
+        elif input_type == "shooter leader name":
+            self.lbl.configure(text="Mata in skytte ledarens namn, tex. (L-O Nilsson)")
+
+        elif input_type == "date":
+            self.lbl.configure(text="Datum, (YYYY-MM-DD)")
+
+        else:
+            raise ValueError(input_type)
+        
+        self.transient(master)
+        self.grab_set()
+        self.focus_force()
+
+    def send_entry(self, data_info):
+        data_bytes = self.entry.get().encode()
+        socket_send(data_bytes, data_info)
+        self.destroy()
+
+    def verify_entry(self, _):
+        input = self.entry.get()
+        type = self.input_type  #! "type" is not a good variable name
+
+        if type in ["shooter name", "shooter leader name"]:
+            if len(input.split()) < 2:
+                print("Ska ha för- och efternamn", flush=True)
+            else:
+                if type == "shooter leader name":
+                    open_input("date")
+                self.send_entry(type.split()[1])
+
+        elif type == "date":
+            try:
+                datetime.datetime.strptime(input, "%Y-%m-%d")
+                print("This is the correct date string format.")
+                self.send_entry(type)
+            except ValueError:
+                print(f'{input} is the incorrect date string format. It should be YYYY-MM-DD', flush=True)
+
+def open_input(input_type):
+    # input_type is one of "shooter name", "shooter leader name" or "date"
+    root.input = InputPopup(root, input_type)
+    root.update()
+
+def close_input():
+    root.input.destroy()
 
 
 def destroy_window():

@@ -13,8 +13,10 @@ Packet prefix
     if not "freemode":
         -- Active users DataFrame       - "Name.csv"
         -- Updated shooting log         - log
+        -- New hit                      - (point, clock)
     else:
         -- Updated shooting log         - log
+        -- New hit                      - (point, clock)
 
 
 -   Shooter (client) sends - When new Shooter

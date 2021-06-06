@@ -6,6 +6,7 @@
 #    May 20, 2021 04:07:12 AM CEST  platform: Windows NT
 
 import sys
+import tkinter.font as Tkfont
 
 try:
     import Tkinter as tk
@@ -59,6 +60,9 @@ class Toplevel1:
         _compcolor = '#d9d9d9' # X11 color: 'gray85'
         _ana1color = '#d9d9d9' # X11 color: 'gray85'
         _ana2color = '#ececec' # Closest X11 color: 'gray92'
+        # default_font = Tkfont.nametofont("TkDefaultFont")
+        # default_font.configure(size=11)
+
 
         top.geometry("1308x878+306+92")
         top.minsize(120, 1)
@@ -69,19 +73,51 @@ class Toplevel1:
         top.configure(highlightbackground="#d9d9d9")
         top.configure(highlightcolor="black")
 
-        self.Label1 = tk.Label(top)
-        self.Label1.place(x=110, y=60, height=21, width=34)
-        self.Label1.configure(activebackground="#f9f9f9")
-        self.Label1.configure(activeforeground="black")
-        self.Label1.configure(background="#d9d9d9")
-        self.Label1.configure(disabledforeground="#a3a3a3")
-        self.Label1.configure(foreground="#000000")
-        self.Label1.configure(highlightbackground="#d9d9d9")
-        self.Label1.configure(highlightcolor="black")
-        self.Label1.configure(text='''Label''')
+        """
+            Shooter labels
+        """
+
+
+        self.shooter_lables = []
+        self.Label_Shooter_Name = tk.Label(top, anchor='w')
+        self.shooter_lables.append(self.Label_Shooter_Name)
+
+        self.Label1 = tk.Label(top, anchor='w')
+        self.shooter_lables.append(self.Label1)
+
+        self.Label2 = tk.Label(top, anchor='w')
+        self.shooter_lables.append(self.Label2)
+
+        self.Label3 = tk.Label(top, anchor='w')
+        self.shooter_lables.append(self.Label3)
+
+        self.Label4 = tk.Label(top, anchor='w')
+        self.shooter_lables.append(self.Label4)
+
+        self.Label5 = tk.Label(top, anchor='w')
+        self.shooter_lables.append(self.Label5)
+
+        x = 20
+        y = 60
+        for labels in self.shooter_lables:
+            labels.place(x=x, y=y, height=21, width=200)
+            labels.configure(activebackground="#f9f9f9")
+            labels.configure(activeforeground="black")
+            labels.configure(background="#d9d9d9")
+            labels.configure(disabledforeground="#a3a3a3")
+            labels.configure(foreground="#000000")
+            labels.configure(highlightbackground="#d9d9d9")
+            labels.configure(highlightcolor="black")
+            # labels.configure(text='''Label''')
+            labels.configure(font=("Segoe UI", 13, "bold"))
+            y += 30
+
+        """
+            End of shooter labels
+        """
 
         self.Listbox1 = tk.Listbox(top)
-        self.Listbox1.place(x=30, y=510, height=262, width=174)
+        self.Listbox1.place(x=10, y=450, height=400, width=300)
         self.Listbox1.configure(background="white")
         self.Listbox1.configure(disabledforeground="#a3a3a3")
         self.Listbox1.configure(font="TkFixedFont")
@@ -90,6 +126,7 @@ class Toplevel1:
         self.Listbox1.configure(highlightcolor="black")
         self.Listbox1.configure(selectbackground="blue")
         self.Listbox1.configure(selectforeground="white")
+        self.Listbox1.configure(font=("Segoe UI", 14))
 
         self.Frame1 = tk.Frame(top)
         self.Frame1.place(x=330, y=20, height=830, width=949)
@@ -102,13 +139,13 @@ class Toplevel1:
 
         self.Image = tk.Label(self.Frame1)
         self.Image.place(x=9, y=8, height=814, width=931)
-        self.Image.configure(activebackground="#f9f9f9")
-        self.Image.configure(activeforeground="black")
-        self.Image.configure(background="#d9d9d9")
-        self.Image.configure(disabledforeground="#a3a3a3")
-        self.Image.configure(foreground="#000000")
-        self.Image.configure(highlightbackground="#d9d9d9")
-        self.Image.configure(highlightcolor="black")
+        # self.Image.configure(activebackground="#f9f9f9")
+        # self.Image.configure(activeforeground="black")
+        # self.Image.configure(background="#d9d9d9")
+        # self.Image.configure(disabledforeground="#a3a3a3")
+        # self.Image.configure(foreground="#000000")
+        # self.Image.configure(highlightbackground="#d9d9d9")
+        # self.Image.configure(highlightcolor="black")
         self.Image.configure(text='''Bild''')
 
 if __name__ == '__main__':

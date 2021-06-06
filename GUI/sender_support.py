@@ -10,12 +10,17 @@
 #    May 19, 2021 05:30:26 PM CEST  platform: Windows NT
 #    May 19, 2021 05:56:42 PM CEST  platform: Windows NT
 
+from os import name
 import sys
 import os.path
 import figureGen
 import pandas as pd
 import numpy as np
 import shutil
+import socket
+import select
+import pickle
+from io import StringIO
 
 try:
     import Tkinter as tk
@@ -56,7 +61,7 @@ def init(top, gui, *args, **kwargs):
     target = figureGen.Target([3, 4, 5, 51])
 
     # Create default image
-    update_img(None,None, True)
+    update_img(point=None, defaultImg=True)
 
     global log
     log = pd.DataFrame(columns=['Name', 'Style', 'Point', 'Clock'])
@@ -86,7 +91,29 @@ def init(top, gui, *args, **kwargs):
         radios[column].configure(state='disabled')
 
 
+    """
+    --- Socket init --- 
+    """
+
+    HOST = '192.168.1.4'
+    PORT = 12345
+    global s
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("Socket created")
+
+    while True:
+        try:
+            s.bind((HOST, PORT))
+            print("Bound succesfully")
+            break
+        except socket.error:
+            print('Bind failed')
+    root.after(500, socket_listen)
+
     # --- End of init edit ---
+
+
+
 
 def delete_item(_, latest=False):
     if  latest:
@@ -107,16 +134,28 @@ def delete_item(_, latest=False):
         pass
     else:
         filename = os.path.join(prog_location, "csv", str(entry['Name'])+".csv")
-        df_from_csv = pd.read_csv(filename, squeeze=True, dtype='str')
-        row = df_from_csv[df_from_csv[entry['Style']] == entry['Point']].last_valid_index()
-        df_from_csv.at[row, entry['Style']] = np.nan
-        df_from_csv.to_csv(filename, index=False)
+        df = pd.read_csv(filename, squeeze=True, dtype='str')
+        row = df[df[entry['Style']] == entry['Point']].last_valid_index()
+        df.at[row, entry['Style']] = np.nan
+        df.to_csv(filename, index=False)
+
+        buffer = StringIO() # Behaves as a txt file but in memory
+        df.to_csv(buffer)
+        socket_send(entry['Name'].encode(), "name")
+        socket_send(pickle.dumps(buffer), "shooter")
+
 
     log.drop([index[0]], inplace=True)
     log.reset_index(inplace=True, drop=True)
     print("")
     print(log.values)
+
     w.Listbox1.delete(index)
+
+    buffer = StringIO() # Behaves as a txt file but in memory
+    log.to_csv(buffer)
+    socket_send(pickle.dumps(buffer), "log_df")
+
     update_radiobuttons()
 
 def add_item(point, clock=None):
@@ -130,24 +169,30 @@ def add_item(point, clock=None):
             string = "{} kl {}".format(str(point), str(clock))
     else:
         filename = os.path.join(prog_location, "csv", str(name)+".csv")
-        df_from_csv = pd.read_csv(filename, squeeze=True, dtype='str')
+        df = pd.read_csv(filename, squeeze=True, dtype='str')
 
         column = ['St', 'J', 'L', 'D'][selectedButton.get()-1]
-        row = pd.isnull(df_from_csv[column]).to_numpy().nonzero()[0][0]
+        row = pd.isnull(df[column]).to_numpy().nonzero()[0][0]
         print(row)
 
-        df_from_csv.at[row, column] = point
-        df_from_csv.to_csv(filename, index=False)
+        df.at[row, column] = point
+        df.to_csv(filename, index=False)
 
-        if not df_from_csv[column].isnull().values.any(): # If column is full
+        if not df[column].isnull().values.any(): # If column is full
             w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
-            w.Entry_Point.delete(0, 'end') # Removes 
+            w.Entry_Point.delete(0, 'end') # Clears entry
             update_radiobuttons()
             
         if clock == None:
             string = "{}: [{}] {}".format(name.split()[0], column, str(point))
         else:
             string = "{}: [{}] {} kl {}".format(name.split()[0], column, str(point), str(clock))
+
+        buffer = StringIO() # Behaves as a txt file but in memory
+        df.to_csv(buffer)
+        socket_send(name.encode(), "name")
+        socket_send(pickle.dumps(buffer), "shooter")
+
 
     global log
     log.loc[-1] = [name, column, point, clock]
@@ -158,6 +203,11 @@ def add_item(point, clock=None):
 
     w.Listbox1.insert(0, string)
     w.Listbox1.see(0)
+
+    buffer = StringIO() # Behaves as a txt file but in memory
+    log.to_csv(buffer)
+    socket_send(pickle.dumps(buffer), "log_df")
+    socket_send(pickle.dumps((point, clock)), "new_hit")
 
 def format_csv(name):
     filename = os.path.join(prog_location, "csv", str(name)+".csv")
@@ -278,15 +328,14 @@ def update_img(point, clock=None, defaultImg=False):
     photo_location = os.path.join(prog_location,"./image.png")
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
-    w.Label1.configure(image=_img0)
+    w.Image.configure(image=_img0)
 
 def open_print_window():
     print('sender_support.open_print_window')
     sys.stdout.flush()
 
 def free_mode():
-    print('sender_support.free_mode')
-    sys.stdout.flush()
+    print('sender_support.free_mode', flush=True)
     if free_mode_check.get() is True:
         w.TCombobox1.set('')
         w.TCombobox1.configure(state='disabled')
@@ -297,6 +346,144 @@ def free_mode():
         w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
         # w.Entry_Point.delete(0, 'end') # Removes
     update_radiobuttons()
+
+"""
+    Begining of socket functions
+"""
+def socket_listen():
+    s.listen(1)
+    s.setblocking(False)
+    print("Socket awaitning connection")
+    global conn, addr
+    i=0
+    open_popup()
+    while True:
+        try:
+            (conn, addr) = s.accept()
+            break
+        except BlockingIOError:
+            i += 1
+            print('/-\|'[i%4]+'\r',end='',flush=True)
+    print("Connected")
+    close_popup()
+    root.after(2000, socket_recive)
+
+def socket_send(data, data_info):
+    data_info = data_info.lower()
+    if len(str(data_info)) > 8:
+        raise ValueError("Data_info has to be max 8 characters, was: " + str(len(data_info)))
+    data_info = f'{data_info: <8}'
+
+    size = len(data) + len(data_info) + 2   # 2 is for "packet_len"
+    FULL_BYTE = int(0xFF)
+    packet_len = bytes([size//FULL_BYTE, size % FULL_BYTE]) # Returns two bytes to store the packet size excluding bytes for TCP protocoll
+    prefix = packet_len + data_info.encode()
+    print(len(prefix + data))
+    try:
+        conn.sendall(prefix + data)
+    except (ConnectionResetError, ConnectionAbortedError) as e:
+        print(e)
+        socket_listen()
+        socket_send(data, data_info)
+
+def socket_recive():
+    FULL_BYTE = int(0xFF)
+    msg = b''
+    msg_list = []
+    length = 0
+    has_read = False
+    while True:
+        r,w,e = select.select([conn], [], [], 0.2)
+        if r:
+            try:
+                msg += conn.recv(2048)
+                has_read = True
+            except (ConnectionResetError, ConnectionAbortedError) as e:
+                print(e)
+                socket_listen()
+                
+        if len(msg) >= 2:
+
+            if length == 0:
+                length = int(msg[0])*FULL_BYTE + int(msg[1]) # Convert first 2 bytes to decimal
+                print(length)
+
+            if len(msg) >= length and length:
+                data_info = msg[2:10]
+                data = msg[10:length]
+                msg_list.append((data, data_info.decode().strip()))
+                msg = msg[length:]
+                length = 0
+
+        if not len(msg):
+            root.after(500, socket_recive)
+            if has_read:
+                act_on_msg(msg_list)
+            # return msg_list
+            return
+
+"""
+    End of socket functions
+"""
+
+def act_on_msg(msg_list):
+    while msg_list:
+        pickled_data, data_info = msg_list.pop(0)
+        
+        if data_info == "ping":
+            pass
+
+        elif data_info == "name":
+            # data = pickle.loads(pickled_data)
+            # data.seek(0)
+            # shooter_df = pd.read_csv(data, index_col=0)
+            # print(shooter_df)
+
+            shooter_name = pickled_data.decode()
+            users.insert(0, shooter_name)
+            w.TCombobox1.configure(values=users)
+            w.TCombobox1.current([0])
+            free_mode_check.set(False)
+            free_mode()
+            _from_combobox("dummy_param")
+
+        elif data_info == "leader":
+            global leader_name
+            leader_name = pickled_data.decode()
+            print("Current leader is " + leader_name)
+
+        elif data_info == "date":
+            print("Current date is " + pickled_data.decode())
+
+        else:
+            print("Unrecognizeable info: " + data_info)
+            print("Was carrying this data: " + str(pickled_data))
+
+
+class Popup(tk.Toplevel):
+    """modal window requires a master"""
+    def __init__(self, master, **kwargs):
+        tk.Toplevel.__init__(self, master, **kwargs)
+        # self.overrideredirect(True)
+        self.geometry('320x150+500+300') # set the position and size of the popup
+
+        lbl = tk.Label(self, text="Försöker koppla til skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
+        lbl.place(relx=.5, rely=.5, anchor='c')
+        self.title("Connecting...")
+
+        # The following commands keep the popup on top.
+        # Remove these if you want a program with 2 responding windows.
+        # These commands must be at the end of __init__
+        self.transient(master) # set to be on top of the main window
+        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
+
+def open_popup():
+    root.popup = Popup(root)
+    root.update()
+
+def close_popup():
+    root.popup.destroy()
+
 
 
 def destroy_window():
