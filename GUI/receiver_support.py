@@ -12,8 +12,7 @@ import pandas as pd
 import socket
 import select
 import pickle
-from io import StringIO
-import time
+# from io import StringIO
 import datetime
 import tkinter as tk
 import tkinter.font as Tkfont
@@ -67,8 +66,9 @@ def update_img(point, clock=None, defaultImg=False):
     _img0 = tk.PhotoImage(file=photo_location)
     w.Image.configure(image=_img0)
 
-    root.update()   #! This might not be needed
-    root.after(3000) #! Image stays for at least 1.5s before changing
+    if not defaultImg:
+        root.update()   #! This might not be needed
+        root.after(3000) #! Image stays for at least 1.5s before changing
 
 """
     Begining of socket functions
@@ -245,7 +245,7 @@ class Popup(tk.Toplevel):
     def __init__(self, master, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
         # self.overrideredirect(True)
-        self.geometry('320x150+500+500') # set the position and size of the popup
+        self.geometry('320x100+500+500') # set the position and size of the popup
 
         lbl = tk.Label(self, text="Försöker koppla til markördatorn ... ", font=("Segoe UI", 11, "bold"))
         lbl.place(relx=.5, rely=.5, anchor='c')
@@ -277,13 +277,31 @@ class InputPopup(tk.Toplevel):
         self.lbl = tk.Label(self, font=("Segoe UI", 11))
         self.lbl.place(relx=.5, rely=.3, anchor='c')
 
-        self.entry = tk.Entry(self)
+        self.entry = tk.Entry(self, font=("Segoe UI", 11))
         self.entry.place(relx=.5, rely=.6, anchor='c')
         self.entry.bind('<Key-Return>', self.verify_entry)
         self.entry.focus()
 
+        self.lbl_entry_error = tk.Label(self)
+        self.lbl_entry_error.place(relx=.5, rely=.75, anchor='c')
+        self.lbl_entry_error.configure(activebackground="#f9f9f9")
+        self.lbl_entry_error.configure(activeforeground="black")
+        # self.lbl_entry_error.configure(background="#d9d9d9")
+        self.lbl_entry_error.configure(disabledforeground="#a3a3a3")
+        self.lbl_entry_error.configure(font="-family {Segoe UI} -size 11 -weight bold")
+        self.lbl_entry_error.configure(foreground="#ff0000")
+        self.lbl_entry_error.configure(highlightbackground="#d9d9d9")
+        self.lbl_entry_error.configure(highlightcolor="black")
+        self.lbl_entry_error.configure(text='''Invalid''')
+
+        self.lbl_entry_error_location = self.lbl_entry_error.place_info()
+        self.lbl_entry_error.place_forget()
+
+
+
         if input_type == "shooter name":
             self.lbl.configure(text="Mata in namn, tex. (John Doe)")
+            self.entry.bind('<Escape>', lambda e: self.destroy())
 
         elif input_type == "shooter leader name":
             self.lbl.configure(text="Mata in skytte ledarens namn, tex. (L-O Nilsson)")
@@ -304,12 +322,20 @@ class InputPopup(tk.Toplevel):
         self.destroy()
 
     def verify_entry(self, _):
+        self.lbl_entry_error.place_forget()
         input = self.entry.get()
         type = self.input_type  #! "type" is not a good variable name
 
         if type in ["shooter name", "shooter leader name"]:
+            
             if len(input.split()) < 2:
                 print("Ska ha för- och efternamn", flush=True)
+                self.lbl_entry_error.place(
+                    relx=self.lbl_entry_error_location['relx'],
+                    rely=self.lbl_entry_error_location['rely'],
+                    anchor='c'
+                )
+
             else:
                 if type == "shooter leader name":
                     open_input("date")
@@ -322,6 +348,12 @@ class InputPopup(tk.Toplevel):
                 self.send_entry(type)
             except ValueError:
                 print(f'{input} is the incorrect date string format. It should be YYYY-MM-DD', flush=True)
+                self.lbl_entry_error.place(
+                    relx=self.lbl_entry_error_location['relx'],
+                    rely=self.lbl_entry_error_location['rely'],
+                    anchor='c'
+                )
+
 
 def open_input(input_type):
     # input_type is one of "shooter name", "shooter leader name" or "date"

@@ -1,6 +1,4 @@
 
-TODO - Ping?
-
 # It is threaded but does not use lock (which would prevent bad instruction splitting "https://medium.com/python-features/using-locks-to-prevent-data-races-in-threads-in-python-b03dfcfbadd6")
 Uses non-blocking socket with select
 
@@ -26,3 +24,5 @@ Packet prefix
         -- Current date
         
     -- Name of shooter
+    
+    Client checks connection by ping every 5 seconds

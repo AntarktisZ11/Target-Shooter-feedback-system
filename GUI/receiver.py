@@ -68,7 +68,7 @@ class Toplevel1:
         top.minsize(120, 1)
         top.maxsize(3844, 1061)
         top.resizable(0,  0)
-        top.title("New Toplevel")
+        top.title("Träff display")
         top.configure(background="#d9d9d9")
         top.configure(highlightbackground="#d9d9d9")
         top.configure(highlightcolor="black")
@@ -127,6 +127,7 @@ class Toplevel1:
         self.Listbox1.configure(selectbackground="blue")
         self.Listbox1.configure(selectforeground="white")
         self.Listbox1.configure(font=("Segoe UI", 14))
+        self.Listbox1.configure(takefocus="0")
 
         self.Frame1 = tk.Frame(top)
         self.Frame1.place(x=330, y=20, height=830, width=949)

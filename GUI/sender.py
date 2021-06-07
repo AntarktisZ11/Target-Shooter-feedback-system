@@ -116,7 +116,6 @@ class Toplevel1:
         self.Entry_Point.place(x=40, y=170, height=20, width=64)
         self.Entry_Point.configure(background="white")
         self.Entry_Point.configure(disabledforeground="#a3a3a3")
-        # self.Entry_Point.configure(font="TkFixedFont")
         self.Entry_Point.configure(foreground="#000000")
         self.Entry_Point.configure(highlightbackground="#d9d9d9")
         self.Entry_Point.configure(highlightcolor="black")
@@ -130,7 +129,6 @@ class Toplevel1:
         self.Entry_Clock.place(x=140, y=170, height=20, width=64)
         self.Entry_Clock.configure(background="white")
         self.Entry_Clock.configure(disabledforeground="#a3a3a3")
-        # self.Entry_Clock.configure(font="TkFixedFont")
         self.Entry_Clock.configure(foreground="#000000")
         self.Entry_Clock.configure(highlightbackground="#d9d9d9")
         self.Entry_Clock.configure(highlightcolor="black")
@@ -174,8 +172,8 @@ class Toplevel1:
         self.Radiobutton1.configure(value=1)
         self.Radiobutton1.configure(variable=sender_support.selectedButton)
         self.tooltip_font = "TkDefaultFont"
-        self.Radiobutton1_tooltip = \
-        ToolTip(self.Radiobutton1, self.tooltip_font, '''Stillastående''')
+        # self.Radiobutton1_tooltip = \
+        # ToolTip(self.Radiobutton1, self.tooltip_font, '''Stillastående''')
 
         self.Radiobutton2 = tk.Radiobutton(top)
         self.Radiobutton2.place(x=40, y=90, height=25, width=74)
@@ -194,7 +192,7 @@ class Toplevel1:
         self.Radiobutton2.configure(variable=sender_support.selectedButton)
 
         self.Radiobutton3 = tk.Radiobutton(top)
-        self.Radiobutton3.place(x=140, y=60, height=25, width=74)
+        self.Radiobutton3.place(x=140, y=60, height=25, width=78)
         self.Radiobutton3.configure(activebackground="#ececec")
         self.Radiobutton3.configure(activeforeground="#000000")
         self.Radiobutton3.configure(background="#d9d9d9")

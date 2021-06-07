@@ -40,6 +40,19 @@ def set_Tk_var():
     global selectedButton
     selectedButton = tk.IntVar()
 
+def onValidate(d, i, S):
+    if d == '1':
+        if S == " ":
+            w.Entry_Point.insert(i, 'X')
+            w.Entry_Point.configure(validate="key")
+            return False
+        elif S == ",":
+            w.Entry_Point.insert(i, 'T')
+            w.Entry_Point.configure(validate="key")
+            return False
+    return True
+
+
 def init(top, gui, *args, **kwargs):
     global w, top_level, root
     w = gui
@@ -87,6 +100,10 @@ def init(top, gui, *args, **kwargs):
     w.Entry_Clock.configure(state='disabled')
     w.Entry_Point.configure(state='disabled')
 
+    vcmd = (root.register(onValidate),
+        '%d', '%i', '%S')
+    w.Entry_Point.configure(validate="key", validatecommand=vcmd)
+
     for column in ['St', 'J', 'L', 'D']:
         radios[column].configure(state='disabled')
 
@@ -111,7 +128,6 @@ def init(top, gui, *args, **kwargs):
     root.after(500, socket_listen)
 
     # --- End of init edit ---
-
 
 
 
@@ -311,7 +327,10 @@ def point_entry(_, update=True):
     else:
         w.Entry_Point.delete(0, 'end')
         root.after(100) # Cause a delay for error label to flash for feedback
-        w.Label_PointError.place(x=Label_PointError_location['x'], y=Label_PointError_location['y'])
+        w.Label_PointError.place(
+            x=Label_PointError_location['x'],
+            y=Label_PointError_location['y']
+        )
         w.Entry_Clock.configure(state='disabled')
         return False
     return True
@@ -331,8 +350,7 @@ def update_img(point, clock=None, defaultImg=False):
     w.Image.configure(image=_img0)
 
 def open_print_window():
-    print('sender_support.open_print_window')
-    sys.stdout.flush()
+    print('sender_support.open_print_window', flush=True)
 
 def free_mode():
     print('sender_support.free_mode', flush=True)
@@ -428,18 +446,13 @@ def socket_recive():
 
 def act_on_msg(msg_list):
     while msg_list:
-        pickled_data, data_info = msg_list.pop(0)
+        encoded_data, data_info = msg_list.pop(0)
         
         if data_info == "ping":
             pass
 
         elif data_info == "name":
-            # data = pickle.loads(pickled_data)
-            # data.seek(0)
-            # shooter_df = pd.read_csv(data, index_col=0)
-            # print(shooter_df)
-
-            shooter_name = pickled_data.decode()
+            shooter_name = encoded_data.decode()
             users.insert(0, shooter_name)
             w.TCombobox1.configure(values=users)
             w.TCombobox1.current([0])
@@ -449,15 +462,15 @@ def act_on_msg(msg_list):
 
         elif data_info == "leader":
             global leader_name
-            leader_name = pickled_data.decode()
+            leader_name = encoded_data.decode()
             print("Current leader is " + leader_name)
 
         elif data_info == "date":
-            print("Current date is " + pickled_data.decode())
+            print("Current date is " + encoded_data.decode())
 
         else:
             print("Unrecognizeable info: " + data_info)
-            print("Was carrying this data: " + str(pickled_data))
+            print("Was carrying this data: " + str(encoded_data))
 
 
 class Popup(tk.Toplevel):
@@ -465,7 +478,7 @@ class Popup(tk.Toplevel):
     def __init__(self, master, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
         # self.overrideredirect(True)
-        self.geometry('320x150+500+300') # set the position and size of the popup
+        self.geometry('320x100+500+300') # set the position and size of the popup
 
         lbl = tk.Label(self, text="Försöker koppla til skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
         lbl.place(relx=.5, rely=.5, anchor='c')
@@ -487,11 +500,6 @@ def close_popup():
 
 
 def destroy_window():
-    try:
-        format_csv(w.TCombobox1.get())
-    except:
-        pass
-    
     # Function which closes the window.
     global top_level
     top_level.destroy()
