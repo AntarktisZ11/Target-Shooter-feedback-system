@@ -22,17 +22,9 @@ import select
 import pickle
 from io import StringIO
 
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
+import tkinter as tk
 
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
+import tkinter.ttk as ttk
 
 def set_Tk_var():
     global free_mode_check
@@ -71,7 +63,7 @@ def init(top, gui, *args, **kwargs):
     os.mkdir(csvfolder)
 
     global target
-    target = figureGen.Target([3, 4, 5, 51])
+    target = figureGen.Target([3, 4, 5, 51], totalSize=1.2)
 
     # Create default image
     update_img(point=None, defaultImg=True)
@@ -84,18 +76,20 @@ def init(top, gui, *args, **kwargs):
     w.TCombobox1.configure(values=users)
 
     global radios
-    radios = {'St': w.Radiobutton1,
-             'J': w.Radiobutton2,
-             'L': w.Radiobutton3,
-             'D': w.Radiobutton4}
+    radios = {'St': w.radiobuttons[0],
+             'J': w.radiobuttons[1],
+             'L': w.radiobuttons[2],
+             'D': w.radiobuttons[3]}
 
-    global Label_ClockError_location
-    Label_ClockError_location = w.Label_ClockError.place_info()
-    w.Label_ClockError.place_forget()
+    # global Label_PointError_location
+    # Label_PointError_location = w.Label_PointError.place_info()
+    # w.Label_PointError.place_forget()
+    w.Label_PointError.grid_remove()
 
-    global Label_PointError_location
-    Label_PointError_location = w.Label_PointError.place_info()
-    w.Label_PointError.place_forget()
+    # global Label_ClockError_location
+    # Label_ClockError_location = w.Label_ClockError.place_info()
+    # w.Label_ClockError.place_forget()
+    w.Label_ClockError.grid_remove()
 
     w.Entry_Clock.configure(state='disabled')
     w.Entry_Point.configure(state='disabled')
@@ -180,15 +174,15 @@ def add_item(point, clock=None):
     if name == '':
         column = None
         if clock == None:
-            string = str(point)
+            string = " " + str(point)
         else:
-            string = "{} kl {}".format(str(point), str(clock))
+            string = " {} kl {}".format(str(point), str(clock))
     else:
         filename = os.path.join(prog_location, "csv", str(name)+".csv")
         df = pd.read_csv(filename, squeeze=True, dtype='str')
 
         column = ['St', 'J', 'L', 'D'][selectedButton.get()-1]
-        row = pd.isnull(df[column]).to_numpy().nonzero()[0][0]
+        row = pd.isnull(df[column]).values.nonzero()[0][0]
         print(row)
 
         df.at[row, column] = point
@@ -196,13 +190,14 @@ def add_item(point, clock=None):
 
         if not df[column].isnull().values.any(): # If column is full
             w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
+            w.Entry_Point.bind('<KP_Enter>', _dummy) # Fixes anoyying bug circumventing disabled entry
             w.Entry_Point.delete(0, 'end') # Clears entry
             update_radiobuttons()
             
         if clock == None:
-            string = "{}: [{}] {}".format(name.split()[0], column, str(point))
+            string = " {}: [{}] {}".format(name.split()[0], column, str(point))
         else:
-            string = "{}: [{}] {} kl {}".format(name.split()[0], column, str(point), str(clock))
+            string = " {}: [{}] {} kl {}".format(name.split()[0], column, str(point), str(clock))
 
         buffer = StringIO() # Behaves as a txt file but in memory
         df.to_csv(buffer)
@@ -236,7 +231,7 @@ def format_csv(name):
     df.to_csv(filename, index=False)
 
 def _from_combobox(_):
-    w.Message1.focus()
+    w.Label_name.focus()
     update_radiobuttons()
 
 def update_radiobuttons():
@@ -269,18 +264,20 @@ def update_radiobuttons():
 def allow_entry():
     w.Entry_Point.configure(state='normal')
     w.Entry_Point.bind('<Key-Return>', point_entry)
+    w.Entry_Point.bind('<KP_Enter>', point_entry)
     w.Entry_Point.focus()
 
 def _dummy(_):
     pass
 
 def clock_entry(_):
-    w.Label_ClockError.place_forget()
+    # w.Label_ClockError.place_forget()
+    w.Label_ClockError.grid_remove()
     root.update()
     point = w.Entry_Point.get()
     clock = w.Entry_Clock.get()
 
-    if point_entry(_, False) and clock in ['12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2','1']:
+    if point_entry(_, update=False) and clock in ['12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2','1']:
         add_item(point, clock)
         update_img(point, int(clock))
         w.Entry_Point.delete(0, 'end')
@@ -290,10 +287,12 @@ def clock_entry(_):
     else:
         w.Entry_Clock.delete(0, 'end')
         root.after(100) # Cause a delay for error label to flash for feedback
-        w.Label_ClockError.place(x=Label_ClockError_location['x'], y=Label_ClockError_location['y'])
+        # w.Label_ClockError.place(x=Label_ClockError_location['x'], y=Label_ClockError_location['y'])
+        w.Label_ClockError.grid()
 
 def point_entry(_, update=True):
-    w.Label_PointError.place_forget()
+    # w.Label_PointError.place_forget()
+    w.Label_PointError.grid_remove()
     root.update()
     point = w.Entry_Point.get()
 
@@ -327,10 +326,11 @@ def point_entry(_, update=True):
     else:
         w.Entry_Point.delete(0, 'end')
         root.after(100) # Cause a delay for error label to flash for feedback
-        w.Label_PointError.place(
-            x=Label_PointError_location['x'],
-            y=Label_PointError_location['y']
-        )
+        # w.Label_PointError.place(
+        #     x=Label_PointError_location['x'],
+        #     y=Label_PointError_location['y']
+        # )
+        w.Label_PointError.grid()
         w.Entry_Clock.configure(state='disabled')
         return False
     return True
@@ -341,9 +341,9 @@ def update_img(point, clock=None, defaultImg=False):
     else:
         try:
             target.targetHit(int(point), clock)
-        except:
+        except ValueError:
             target.targetHit(point, clock)
-    target.saveFigure()
+    target.saveFigure(dpi=80)
     photo_location = os.path.join(prog_location,"./image.png")
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
@@ -362,6 +362,7 @@ def free_mode():
         w.TCombobox1.configure(state='readonly')
         w.Entry_Point.configure(state='disabled')
         w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
+        w.Entry_Point.bind('<KP_Enter>', _dummy) # Fixes anoyying bug circumventing disabled entry
         # w.Entry_Point.delete(0, 'end') # Removes
     update_radiobuttons()
 
@@ -399,7 +400,7 @@ def socket_send(data, data_info):
     print(len(prefix + data))
     try:
         conn.sendall(prefix + data)
-    except (ConnectionResetError, ConnectionAbortedError) as e:
+    except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
         print(e)
         socket_listen()
         socket_send(data, data_info)
@@ -416,7 +417,7 @@ def socket_recive():
             try:
                 msg += conn.recv(2048)
                 has_read = True
-            except (ConnectionResetError, ConnectionAbortedError) as e:
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
                 print(e)
                 socket_listen()
                 
@@ -478,7 +479,7 @@ class Popup(tk.Toplevel):
     def __init__(self, master, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
         # self.overrideredirect(True)
-        self.geometry('320x100+500+300') # set the position and size of the popup
+        self.geometry('320x100+240+190') # set the position and size of the popup
 
         lbl = tk.Label(self, text="Försöker koppla til skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
         lbl.place(relx=.5, rely=.5, anchor='c')

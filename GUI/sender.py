@@ -5,20 +5,13 @@
 #  in conjunction with Tcl version 8.6
 #    May 19, 2021 10:15:54 PM CEST  platform: Windows NT
 
+#! Made for python 3.7 and 3.8
+
 import sys
 
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-    import tkinter.font as Tkfont
-
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
+import tkinter as tk
+import tkinter.ttk as ttk
+import tkinter.font as Tkfont
 
 import sender_support
 
@@ -71,219 +64,217 @@ class Toplevel1:
         self.style.map('.',background=
             [('selected', _compcolor), ('active',_ana2color)])
 
-        top.geometry("800x400+300+146")
+        top.geometry("800x480+0+0")
         top.minsize(120, 1)
         top.maxsize(1920, 1080)
         top.resizable(0,  0)
+        if sys.platform == "linux":
+            top.attributes("-fullscreen", True)
         top.title("Träffmarkerare")
         top.configure(background="#d9d9d9")
         top.configure(highlightbackground="#d9d9d9")
         top.configure(highlightcolor="black")
-        if sys.platform == "linux":
-            top.attributes("-zoomed", True)
+        
 
-        self.Message1 = tk.Message(top)
-        self.Message1.place(x=30, y=20, height=23, width=50)
-        self.Message1.configure(background="#d9d9d9")
-        self.Message1.configure(foreground="#000000")
-        self.Message1.configure(highlightbackground="#d9d9d9")
-        self.Message1.configure(highlightcolor="black")
-        self.Message1.configure(takefocus="")
-        self.Message1.configure(text='''Namn:''')
-        self.Message1.configure(width=60)
+        """
+            -------  Image  ---------
+        """
 
-        self.Frame1 = tk.Frame(top)
-        self.Frame1.place(x=250, y=0, height=395, width=515)
-        self.Frame1.configure(relief='groove')
-        self.Frame1.configure(borderwidth="2")
-        self.Frame1.configure(relief="groove")
-        self.Frame1.configure(background="#d9d9d9")
-        self.Frame1.configure(highlightbackground="#d9d9d9")
-        self.Frame1.configure(highlightcolor="black")
+        self.Frame_Image = tk.Frame(top)
+        self.Frame_Image.place(x=250, y=0, height=450, width=550)
+        self.Frame_Image.configure(
+            # relief='groove',
+            # borderwidth="2",
+            background="#d9d9d9",
+            # highlightbackground="#d9d9d9",
+            # highlightcolor="black",
+        )
 
-        self.Image = tk.Label(self.Frame1)
-        self.Image.place(x=10, y=10, height=375, width=495)
-        self.Image.configure(activebackground="#f9f9f9")
-        self.Image.configure(activeforeground="black")
-        self.Image.configure(background="#d9d9d9")
-        self.Image.configure(disabledforeground="#a3a3a3")
-        self.Image.configure(foreground="#000000")
-        self.Image.configure(highlightbackground="#d9d9d9")
-        self.Image.configure(highlightcolor="black")
-        self.Image.configure(text='''Bild''')
+        self.Image = tk.Label(self.Frame_Image)
+        self.Image.place(relx=.5, rely=.5, height=430, width=530, anchor='c')
+        self.Image.configure(
+            background="#d9d9d9",
+            text='''Bild'''
+        )
 
-        self.Entry_Point = tk.Entry(top)
-        self.Entry_Point.place(x=40, y=170, height=20, width=64)
-        self.Entry_Point.configure(background="white")
-        self.Entry_Point.configure(disabledforeground="#a3a3a3")
-        self.Entry_Point.configure(foreground="#000000")
-        self.Entry_Point.configure(highlightbackground="#d9d9d9")
-        self.Entry_Point.configure(highlightcolor="black")
-        self.Entry_Point.configure(insertbackground="black")
-        self.Entry_Point.configure(justify='center')
-        self.Entry_Point.configure(selectbackground="blue")
-        self.Entry_Point.configure(selectforeground="white")
-        self.Entry_Point.bind('<Key-Return>',sender_support.point_entry)
 
-        self.Entry_Clock = tk.Entry(top)
-        self.Entry_Clock.place(x=140, y=170, height=20, width=64)
-        self.Entry_Clock.configure(background="white")
-        self.Entry_Clock.configure(disabledforeground="#a3a3a3")
-        self.Entry_Clock.configure(foreground="#000000")
-        self.Entry_Clock.configure(highlightbackground="#d9d9d9")
-        self.Entry_Clock.configure(highlightcolor="black")
-        self.Entry_Clock.configure(insertbackground="black")
-        self.Entry_Clock.configure(justify='center')
-        self.Entry_Clock.configure(selectbackground="blue")
-        self.Entry_Clock.configure(selectforeground="white")
-        self.Entry_Clock.bind('<Key-Return>',sender_support.clock_entry)
+        """
+            -------  Name-combobox  ---------
+        """
 
-        self.Message2 = tk.Message(top)
-        self.Message2.place(x=50, y=140, height=23, width=48)
-        self.Message2.configure(background="#d9d9d9")
-        self.Message2.configure(foreground="#000000")
-        self.Message2.configure(highlightbackground="#d9d9d9")
-        self.Message2.configure(highlightcolor="black")
-        self.Message2.configure(text='''Poäng''')
-        self.Message2.configure(width=60)
-
-        self.Message3 = tk.Message(top)
-        self.Message3.place(x=150, y=140, height=23, width=49)
-        self.Message3.configure(background="#d9d9d9")
-        self.Message3.configure(foreground="#000000")
-        self.Message3.configure(highlightbackground="#d9d9d9")
-        self.Message3.configure(highlightcolor="black")
-        self.Message3.configure(text='''Klocka''')
-        self.Message3.configure(width=60)
-
-        self.Radiobutton1 = tk.Radiobutton(top)
-        self.Radiobutton1.place(x=40, y=60, height=25, width=53)
-        self.Radiobutton1.configure(activebackground="#ececec")
-        self.Radiobutton1.configure(activeforeground="#000000")
-        self.Radiobutton1.configure(background="#d9d9d9")
-        self.Radiobutton1.configure(command=sender_support.allow_entry)
-        self.Radiobutton1.configure(disabledforeground="#a3a3a3")
-        self.Radiobutton1.configure(foreground="#000000")
-        self.Radiobutton1.configure(highlightbackground="#d9d9d9")
-        self.Radiobutton1.configure(highlightcolor="black")
-        self.Radiobutton1.configure(justify='left')
-        self.Radiobutton1.configure(takefocus="0")
-        self.Radiobutton1.configure(text='''Stilla''')
-        self.Radiobutton1.configure(value=1)
-        self.Radiobutton1.configure(variable=sender_support.selectedButton)
-        self.tooltip_font = "TkDefaultFont"
-        # self.Radiobutton1_tooltip = \
-        # ToolTip(self.Radiobutton1, self.tooltip_font, '''Stillastående''')
-
-        self.Radiobutton2 = tk.Radiobutton(top)
-        self.Radiobutton2.place(x=40, y=90, height=25, width=74)
-        self.Radiobutton2.configure(activebackground="#ececec")
-        self.Radiobutton2.configure(activeforeground="#000000")
-        self.Radiobutton2.configure(background="#d9d9d9")
-        self.Radiobutton2.configure(command=sender_support.allow_entry)
-        self.Radiobutton2.configure(disabledforeground="#a3a3a3")
-        self.Radiobutton2.configure(foreground="#000000")
-        self.Radiobutton2.configure(highlightbackground="#d9d9d9")
-        self.Radiobutton2.configure(highlightcolor="black")
-        self.Radiobutton2.configure(justify='left')
-        self.Radiobutton2.configure(takefocus="0")
-        self.Radiobutton2.configure(text='''Jaktskott''')
-        self.Radiobutton2.configure(value=2)
-        self.Radiobutton2.configure(variable=sender_support.selectedButton)
-
-        self.Radiobutton3 = tk.Radiobutton(top)
-        self.Radiobutton3.place(x=140, y=60, height=25, width=78)
-        self.Radiobutton3.configure(activebackground="#ececec")
-        self.Radiobutton3.configure(activeforeground="#000000")
-        self.Radiobutton3.configure(background="#d9d9d9")
-        self.Radiobutton3.configure(command=sender_support.allow_entry)
-        self.Radiobutton3.configure(disabledforeground="#a3a3a3")
-        self.Radiobutton3.configure(foreground="#000000")
-        self.Radiobutton3.configure(highlightbackground="#d9d9d9")
-        self.Radiobutton3.configure(highlightcolor="black")
-        self.Radiobutton3.configure(justify='left')
-        self.Radiobutton3.configure(takefocus="0")
-        self.Radiobutton3.configure(text='''Löpande''')
-        self.Radiobutton3.configure(value=3)
-        self.Radiobutton3.configure(variable=sender_support.selectedButton)
-
-        self.Radiobutton4 = tk.Radiobutton(top)
-        self.Radiobutton4.place(x=140, y=90, height=25, width=66)
-        self.Radiobutton4.configure(activebackground="#ececec")
-        self.Radiobutton4.configure(activeforeground="#000000")
-        self.Radiobutton4.configure(background="#d9d9d9")
-        self.Radiobutton4.configure(command=sender_support.allow_entry)
-        self.Radiobutton4.configure(disabledforeground="#a3a3a3")
-        self.Radiobutton4.configure(foreground="#000000")
-        self.Radiobutton4.configure(highlightbackground="#d9d9d9")
-        self.Radiobutton4.configure(highlightcolor="black")
-        self.Radiobutton4.configure(justify='left')
-        self.Radiobutton4.configure(takefocus="0")
-        self.Radiobutton4.configure(text='''Dubble''')
-        self.Radiobutton4.configure(value=4)
-        self.Radiobutton4.configure(variable=sender_support.selectedButton)
+        self.Label_name = tk.Label(top, text='''Namn: ''')
+        self.Label_name.place(x=30, y=20, height=23, width=50)
+        self.Label_name.configure(
+            background="#d9d9d9",
+            foreground="#000000",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black",
+            takefocus="",
+            justify="left"
+        )
 
         self.TCombobox1 = ttk.Combobox(top)
-        self.TCombobox1.place(x=80, y=20, height=28, width=143)
-        # self.value_list = ['Per Persson','Johan Johansson','Sven Svensson',]
-        # self.TCombobox1.configure(values=self.value_list)
+        self.TCombobox1.place(x=80, y=20, height=28, width=150)
         self.TCombobox1.configure(state='readonly')
         self.TCombobox1.configure(takefocus="0")
         self.TCombobox1.bind('<FocusIn>',sender_support._from_combobox)
 
+
+        """
+            -------  Radio  ---------
+        """
+
+        self.Frame_radio = tk.Frame(top)
+        self.Frame_radio.place(x=30, y=60, height=55, width=200)
+        self.Frame_radio.configure(background="#d9d9d9")
+        self.Frame_radio.grid_columnconfigure(0, weight=1)
+        self.Frame_radio.grid_columnconfigure(1, weight=1)
+
+        self.Radiobutton1 = tk.Radiobutton(self.Frame_radio, value=1, text='''Stilla''')
+        self.Radiobutton2 = tk.Radiobutton(self.Frame_radio, value=2, text='''Jaktskott''')
+        self.Radiobutton3 = tk.Radiobutton(self.Frame_radio, value=3, text='''Löpande''')
+        self.Radiobutton4 = tk.Radiobutton(self.Frame_radio, value=4, text='''Dubble''')
+
+        # self.tooltip_font = "TkDefaultFont"
+        # self.Radiobutton1_tooltip = \
+        # ToolTip(self.Radiobutton1, self.tooltip_font, '''Stillastående''')
+
+        self.Radiobutton1.grid(row=0, column=0, sticky='W')
+        self.Radiobutton2.grid(row=1, column=0, sticky='W')
+        self.Radiobutton3.grid(row=0, column=1, sticky='W')
+        self.Radiobutton4.grid(row=1, column=1, sticky='W')
+
+        self.radiobuttons = []
+        self.radiobuttons.append(self.Radiobutton1)
+        self.radiobuttons.append(self.Radiobutton2)
+        self.radiobuttons.append(self.Radiobutton3)
+        self.radiobuttons.append(self.Radiobutton4)
+
+        for rb in self.radiobuttons:
+            rb.configure(
+                activebackground="#ececec",
+                activeforeground="#000000",
+                background="#d9d9d9",
+                command=sender_support.allow_entry,
+                disabledforeground="#a3a3a3",
+                foreground="#000000",
+                highlightbackground="#d9d9d9",
+                highlightcolor="black",
+                justify='left',
+                takefocus="0",
+                variable=sender_support.selectedButton
+            )
+
+
+        """
+            -------  Entry  ---------
+        """
+
+        self.Frame_entry = tk.Frame(top)
+        self.Frame_entry.place(x=30, y=140, height=90, width=200)
+        self.Frame_entry.configure(background="#d9d9d9")
+        self.Frame_entry.grid_columnconfigure(0, weight=1)
+        self.Frame_entry.grid_columnconfigure(1, weight=1)
+
+        self.Entry_Point = tk.Entry(self.Frame_entry)
+        self.Entry_Point.bind('<Key-Return>', sender_support.point_entry)
+        self.Entry_Point.bind('<KP_Enter>', sender_support.point_entry)
+
+        self.Entry_Clock = tk.Entry(self.Frame_entry)
+        self.Entry_Clock.bind('<Key-Return>', sender_support.clock_entry)
+        self.Entry_Clock.bind('<KP_Enter>', sender_support.clock_entry)
+
+        self.Entry_Point.grid(row=1, column=0, padx=20, sticky="")
+        self.Entry_Clock.grid(row=1, column=1, padx=20, sticky="")
+
+
+        self.entries = []
+        self.entries.append(self.Entry_Point)
+        self.entries.append(self.Entry_Clock)
+
+        for entry in self.entries:
+            entry.configure(
+                background="white",
+                disabledforeground="#a3a3a3",
+                foreground="#000000",
+                highlightbackground="#d9d9d9",
+                highlightcolor="black",
+                insertbackground="black",
+                justify='center',
+                selectbackground="blue",
+                selectforeground="white"
+            )
+       
+
+        self.Label_point = tk.Label(self.Frame_entry, text='''Poäng''')
+        self.Label_clock = tk.Label(self.Frame_entry, text='''Klocka''')
+
+        self.Label_point.grid(row=0, column=0, pady=2, sticky='N')
+        self.Label_clock.grid(row=0, column=1, pady=2, sticky='N')
+
+
+        self.entry_lbls = []
+        self.entry_lbls.append(self.Label_point)
+        self.entry_lbls.append(self.Label_clock)
+
+        for lbl in self.entry_lbls:
+            lbl.configure(
+                background="#d9d9d9",
+                foreground="#000000",
+                highlightbackground="#d9d9d9",
+                highlightcolor="black",
+            )
+
+        self.Label_PointError = tk.Label(self.Frame_entry)
+        self.Label_ClockError = tk.Label(self.Frame_entry)
+
+        self.Label_PointError.grid(row=2, column=0, sticky='N')
+        self.Label_ClockError.grid(row=2, column=1, sticky='N')
+
+        self.error_lbls = []
+        self.error_lbls.append(self.Label_PointError)
+        self.error_lbls.append(self.Label_ClockError)
+
+        for lbl in self.error_lbls:
+            lbl.configure(
+                activebackground="#f9f9f9",
+                activeforeground="black",
+                background="#d9d9d9",
+                disabledforeground="#a3a3a3",
+                font="-family {Segoe UI} -size 9 -weight bold",
+                foreground="#ff0000",
+                highlightbackground="#d9d9d9",
+                highlightcolor="black",
+                text='''Invalid'''
+            )
+
+
+        """
+            -------  Log  ---------
+        """
+
         self.Listbox1 = tk.Listbox(top)
-        self.Listbox1.place(x=30, y=230, height=102, width=184)
-        self.Listbox1.configure(background="white")
-        self.Listbox1.configure(disabledforeground="#a3a3a3")
-        # self.Listbox1.configure(font="TkFixedFont")
-        self.Listbox1.configure(foreground="#000000")
-        self.Listbox1.configure(highlightbackground="#d9d9d9")
-        self.Listbox1.configure(highlightcolor="black")
-        self.Listbox1.configure(selectbackground="blue")
-        self.Listbox1.configure(selectforeground="white")
-        self.Listbox1.configure(takefocus="0")
+        self.Listbox1.place(x=30, y=230, height=150, width=200)
+        self.Listbox1.configure(
+            background="white",
+            disabledforeground="#a3a3a3",
+            foreground="#000000",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black",
+            selectbackground="blue",
+            selectforeground="white",
+            takefocus="0"
+        )
         self.Listbox1.bind('<Key-Delete>',sender_support.delete_item)
         self.Listbox1.bind('<Key-BackSpace>',sender_support.delete_item)
 
-        self.Label_PointError = tk.Label(top)
-        self.Label_PointError.place(x=40, y=190, height=21, width=64)
-        self.Label_PointError.configure(activebackground="#f9f9f9")
-        self.Label_PointError.configure(activeforeground="black")
-        self.Label_PointError.configure(background="#d9d9d9")
-        self.Label_PointError.configure(disabledforeground="#a3a3a3")
-        self.Label_PointError.configure(font="-family {Segoe UI} -size 9 -weight bold")
-        self.Label_PointError.configure(foreground="#ff0000")
-        self.Label_PointError.configure(highlightbackground="#d9d9d9")
-        self.Label_PointError.configure(highlightcolor="black")
-        self.Label_PointError.configure(text='''Invalid''')
 
-        self.Label_ClockError = tk.Label(top)
-        self.Label_ClockError.place(x=140, y=190, height=21, width=64)
-        self.Label_ClockError.configure(activebackground="#f9f9f9")
-        self.Label_ClockError.configure(activeforeground="black")
-        self.Label_ClockError.configure(background="#d9d9d9")
-        self.Label_ClockError.configure(disabledforeground="#a3a3a3")
-        self.Label_ClockError.configure(font="-family {Segoe UI} -size 9 -weight bold")
-        self.Label_ClockError.configure(foreground="#ff0000")
-        self.Label_ClockError.configure(highlightbackground="#d9d9d9")
-        self.Label_ClockError.configure(highlightcolor="black")
-        self.Label_ClockError.configure(text='''Invalid''')
-
-        self.Button_Undo = tk.Button(top)
-        self.Button_Undo.place(x=130, y=350, height=24, width=73)
-        self.Button_Undo.configure(activebackground="#ececec")
-        self.Button_Undo.configure(activeforeground="#000000")
-        self.Button_Undo.configure(background="#d9d9d9")
-        self.Button_Undo.configure(command= lambda: sender_support.delete_item("doesNothing", True))
-        self.Button_Undo.configure(disabledforeground="#a3a3a3")
-        self.Button_Undo.configure(foreground="#000000")
-        self.Button_Undo.configure(highlightbackground="#d9d9d9")
-        self.Button_Undo.configure(highlightcolor="black")
-        self.Button_Undo.configure(pady="0")
-        self.Button_Undo.configure(text='''Ångra''')
+        """
+            -------  Buttons  ---------
+        """
 
         self.Exit = tk.Button(top)
-        self.Exit.place(x=40, y=350, height=24, width=30)
+        self.Exit.place(x=50, y=400, height=24, width=40)
         self.Exit.configure(activebackground="#ececec")
         self.Exit.configure(activeforeground="#000000")
         self.Exit.configure(background="#d9d9d9")
@@ -294,6 +285,24 @@ class Toplevel1:
         self.Exit.configure(highlightcolor="black")
         self.Exit.configure(pady="0")
         self.Exit.configure(text='''Exit''')
+
+        self.Button_Undo = tk.Button(top)
+        self.Button_Undo.place(x=130, y=400, height=24, width=73)
+        self.Button_Undo.configure(activebackground="#ececec")
+        self.Button_Undo.configure(activeforeground="#000000")
+        self.Button_Undo.configure(background="#d9d9d9")
+        self.Button_Undo.configure(command= lambda: sender_support.delete_item("doesNothing", latest=True))
+        self.Button_Undo.configure(disabledforeground="#a3a3a3")
+        self.Button_Undo.configure(foreground="#000000")
+        self.Button_Undo.configure(highlightbackground="#d9d9d9")
+        self.Button_Undo.configure(highlightcolor="black")
+        self.Button_Undo.configure(pady="0")
+        self.Button_Undo.configure(text='''Ångra''')
+
+
+        """
+            -------  Menubar  ---------
+        """
 
         self.menubar = tk.Menu(top,font="TkMenuFont",bg=_bgcolor,fg=_fgcolor)
         top.configure(menu = self.menubar)
