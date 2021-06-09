@@ -160,7 +160,7 @@ if __name__ == "__main__":
 	target = Target([1, 2, 3, 4, 5, 51])
 	target1 = Target([3, 4, 5, 51])
 
-	# Colormap too small, this causes error
+	#! Colormap too small, this causes error
 	# target2 = Target([1,2,3,4,5,6,7,8,9,10,11])
 	# target2.targetHit(2)
 	# target2.showFullscreen()

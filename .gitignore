@@ -8,3 +8,9 @@
 GUI/csv/*.csv
 *.tcl#
 GUI/.vscode/settings.json
+GUI/testing3.py
+GUI/testing.py
+GUI/testing2.py
+testing3.py
+AnotherThreadingTest.py
+test_threading.py

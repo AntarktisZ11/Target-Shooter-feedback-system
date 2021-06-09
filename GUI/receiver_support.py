@@ -31,12 +31,18 @@ def init(top, gui, *args, **kwargs):
     prog_call = sys.argv[0]
     prog_location = os.path.split(prog_call)[0]
 
+    global DPI
+    DPI = 180
+
     global target
     target = figureGen.Target([3, 4, 5, 51], totalSize=1.25)
 
     global HOST, PORT
     HOST = '192.168.1.4'
     PORT = 12345
+
+    global recive_timer, ping_timer
+    recive_timer, ping_timer = None, None
 
     # Create default image
     update_img(point=None, defaultImg=True)
@@ -45,10 +51,7 @@ def init(top, gui, *args, **kwargs):
 
     root.after(2000, socket_connect)
 
-    # root.after(500, open_input, "shooter name")
-    # root.after(500, open_input, "date")
     # --- End of init edit ---
-
 
 
 
@@ -60,7 +63,7 @@ def update_img(point, clock=None, defaultImg=False):
             target.targetHit(int(point), clock)
         except ValueError:
             target.targetHit(point, clock)
-    target.saveFigure(dpi=180)
+    target.saveFigure(dpi=DPI)
     photo_location = os.path.join(prog_location,"./image.png")
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
@@ -70,9 +73,10 @@ def update_img(point, clock=None, defaultImg=False):
         root.update()   #! This might not be needed
         root.after(3000) #! Image stays for at least 1.5s before changing
 
-"""
-    Begining of socket functions
-"""
+
+    """
+        -------  Socket functions  ---------
+    """
 
 def socket_connect():
     global s
@@ -83,13 +87,20 @@ def socket_connect():
             s.connect((HOST, PORT))
             s.setblocking(0)
             break
-        except TimeoutError:
+        except (TimeoutError, ConnectionRefusedError):
             print("Waiting to connect!")
     print("Connected")
     close_popup()
     root.after(300, open_input, "shooter leader name")
-    root.after(2000, socket_recive)
-    root.after(5000, ping)
+    
+    global recive_timer, ping_timer
+    if recive_timer is not None:
+        root.after_cancel(recive_timer)
+    if ping_timer is not None:
+        root.after_cancel(ping_timer)
+        
+    recive_timer = root.after(2000, socket_recive)
+    ping_timer = root.after(5000, ping)
 
 
 def socket_send(data, data_info):
@@ -105,7 +116,7 @@ def socket_send(data, data_info):
     print(len(prefix + data))
     try:
         s.sendall(prefix + data)
-    except (ConnectionResetError, ConnectionAbortedError) as e:
+    except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
         print(e)
         socket_connect()
         socket_send(data, data_info)
@@ -124,7 +135,7 @@ def socket_recive():
             try:
                 msg += s.recv(2048)
                 has_read = True
-            except (ConnectionResetError, ConnectionAbortedError) as e:
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
                 print(e)
                 socket_connect()
 
@@ -142,18 +153,22 @@ def socket_recive():
                 length = 0
 
         if not len(msg):
-            root.after(500, socket_recive)
+            global recive_timer
+            recive_timer = root.after(500, socket_recive)
             if has_read:
                 act_on_msg(msg_list)
             return
 
 def ping():
     socket_send(b'', "ping")
-    root.after(5000, ping)
+    global ping_timer
+    ping_timer = root.after(5000, ping)
 
-"""
-    End of socket functions
-"""
+
+    """
+        -------  End of socket functions  ---------
+    """
+
 
 def act_on_msg(msg_list):
     while msg_list:
@@ -226,14 +241,14 @@ def fill_listbox(df):
 
         if name == None:
             if clock == None:
-                string = point
+                string = " " + point
             else:
-                string = "{} kl {:.0f}".format(point, clock)
+                string = " {} kl {:.0f}".format(point, clock)
         else:
             if clock == None:
-                string = "{}: [{}] {}".format(name.split()[0], style, point)
+                string = " {}: [{}] {}".format(name.split()[0], style, point)
             else:
-                string = "{}: [{}] {} kl {:.0f}".format(name.split()[0], style, point, clock)
+                string = " {}: [{}] {} kl {:.0f}".format(name.split()[0], style, point, clock)
         w.Listbox1.insert('end', string)
     w.Listbox1.see(0)
 
@@ -280,23 +295,24 @@ class InputPopup(tk.Toplevel):
         self.entry = tk.Entry(self, font=("Segoe UI", 11))
         self.entry.place(relx=.5, rely=.6, anchor='c')
         self.entry.bind('<Key-Return>', self.verify_entry)
+        self.entry.bind('<KP_Enter>', self.verify_entry)
         self.entry.focus()
 
-        self.lbl_entry_error = tk.Label(self)
+        self.lbl_entry_error = tk.Label(self, text='''Invalid''')
         self.lbl_entry_error.place(relx=.5, rely=.75, anchor='c')
-        self.lbl_entry_error.configure(activebackground="#f9f9f9")
-        self.lbl_entry_error.configure(activeforeground="black")
-        # self.lbl_entry_error.configure(background="#d9d9d9")
-        self.lbl_entry_error.configure(disabledforeground="#a3a3a3")
-        self.lbl_entry_error.configure(font="-family {Segoe UI} -size 11 -weight bold")
-        self.lbl_entry_error.configure(foreground="#ff0000")
-        self.lbl_entry_error.configure(highlightbackground="#d9d9d9")
-        self.lbl_entry_error.configure(highlightcolor="black")
-        self.lbl_entry_error.configure(text='''Invalid''')
+        self.lbl_entry_error.configure(
+            activebackground="#f9f9f9",
+            activeforeground="black",
+            # background="#d9d9d9",
+            disabledforeground="#a3a3a3",
+            font="-family {Segoe UI} -size 11 -weight bold",
+            foreground="#ff0000",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black"
+        )
 
         self.lbl_entry_error_location = self.lbl_entry_error.place_info()
         self.lbl_entry_error.place_forget()
-
 
 
         if input_type == "shooter name":

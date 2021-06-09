@@ -81,14 +81,7 @@ def init(top, gui, *args, **kwargs):
              'L': w.radiobuttons[2],
              'D': w.radiobuttons[3]}
 
-    # global Label_PointError_location
-    # Label_PointError_location = w.Label_PointError.place_info()
-    # w.Label_PointError.place_forget()
     w.Label_PointError.grid_remove()
-
-    # global Label_ClockError_location
-    # Label_ClockError_location = w.Label_ClockError.place_info()
-    # w.Label_ClockError.place_forget()
     w.Label_ClockError.grid_remove()
 
     w.Entry_Clock.configure(state='disabled')
@@ -120,6 +113,9 @@ def init(top, gui, *args, **kwargs):
         except socket.error:
             print('Bind failed')
     root.after(500, socket_listen)
+
+    global recive_timer, ping_timer
+    recive_timer, ping_timer = None, None
 
     # --- End of init edit ---
 
@@ -287,11 +283,9 @@ def clock_entry(_):
     else:
         w.Entry_Clock.delete(0, 'end')
         root.after(100) # Cause a delay for error label to flash for feedback
-        # w.Label_ClockError.place(x=Label_ClockError_location['x'], y=Label_ClockError_location['y'])
         w.Label_ClockError.grid()
 
 def point_entry(_, update=True):
-    # w.Label_PointError.place_forget()
     w.Label_PointError.grid_remove()
     root.update()
     point = w.Entry_Point.get()
@@ -326,10 +320,6 @@ def point_entry(_, update=True):
     else:
         w.Entry_Point.delete(0, 'end')
         root.after(100) # Cause a delay for error label to flash for feedback
-        # w.Label_PointError.place(
-        #     x=Label_PointError_location['x'],
-        #     y=Label_PointError_location['y']
-        # )
         w.Label_PointError.grid()
         w.Entry_Clock.configure(state='disabled')
         return False
@@ -363,13 +353,15 @@ def free_mode():
         w.Entry_Point.configure(state='disabled')
         w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
         w.Entry_Point.bind('<KP_Enter>', _dummy) # Fixes anoyying bug circumventing disabled entry
-        # w.Entry_Point.delete(0, 'end') # Removes
     update_radiobuttons()
 
 """
     Begining of socket functions
 """
 def socket_listen():
+    if ping_timer is not None:
+        root.after_cancel(ping_timer)
+
     s.listen(1)
     s.setblocking(False)
     print("Socket awaitning connection")
@@ -385,7 +377,10 @@ def socket_listen():
             print('/-\|'[i%4]+'\r',end='',flush=True)
     print("Connected")
     close_popup()
-    root.after(2000, socket_recive)
+    global recive_timer
+    if recive_timer is not None:
+        root.after_cancel(recive_timer)
+    recive_timer = root.after(2000, socket_recive)
 
 def socket_send(data, data_info):
     data_info = data_info.lower()
@@ -435,7 +430,8 @@ def socket_recive():
                 length = 0
 
         if not len(msg):
-            root.after(500, socket_recive)
+            global recive_timer
+            recive_timer = root.after(500, socket_recive)
             if has_read:
                 act_on_msg(msg_list)
             # return msg_list
@@ -450,7 +446,10 @@ def act_on_msg(msg_list):
         encoded_data, data_info = msg_list.pop(0)
         
         if data_info == "ping":
-            pass
+            global ping_timer
+            if ping_timer is not None:
+                root.after_cancel(ping_timer)
+            ping_timer = root.after(15000, socket_listen)
 
         elif data_info == "name":
             shooter_name = encoded_data.decode()

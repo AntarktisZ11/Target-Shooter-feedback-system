@@ -6,19 +6,10 @@
 #    May 20, 2021 04:07:12 AM CEST  platform: Windows NT
 
 import sys
+
+import tkinter as tk
+import tkinter.ttk as ttk
 import tkinter.font as Tkfont
-
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
 
 import receiver_support
 import os.path
@@ -66,88 +57,132 @@ class Toplevel1:
 
         top.geometry("1308x878+306+92")
         top.minsize(120, 1)
-        top.maxsize(3844, 1061)
-        top.resizable(0,  0)
+        top.maxsize(1920, 1080)
+        top.resizable(True,  True)
+        if sys.platform == "linux":
+            top.attributes("-fullscreen", True)
+        # top.attributes("-fullscreen", True)
         top.title("Träff display")
         top.configure(background="#d9d9d9")
         top.configure(highlightbackground="#d9d9d9")
         top.configure(highlightcolor="black")
 
+        top.grid_columnconfigure(0, weight=1)
+        top.grid_columnconfigure(1, weight=4)
+        top.grid_rowconfigure(0, weight=1)
+        top.grid_rowconfigure(1, weight=1)
+
+
+
         """
-            Shooter labels
+            -------  Image  ---------
         """
 
+        self.Frame_Image = tk.Frame(top, height=100, width=100)
+        self.Frame_Image.grid(row=0, rowspan=2, column=1, sticky="NSEW")
+        self.Frame_Image.grid_columnconfigure(0, weight=1)
+        self.Frame_Image.configure(
+            relief='groove',
+            borderwidth="2",
+            # background="#d9d9d9",
+            background="white",
+            # background="pink",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black"
+        )
 
-        self.shooter_lables = []
-        self.Label_Shooter_Name = tk.Label(top, anchor='w')
-        self.shooter_lables.append(self.Label_Shooter_Name)
+        self.Image = tk.Label(self.Frame_Image)
+        self.Image.place(relx=.5, rely=.5, anchor='c')
+        self.Image.configure(
+            text='''Bild''',
+            background="white"
+        )
 
-        self.Label1 = tk.Label(top, anchor='w')
-        self.shooter_lables.append(self.Label1)
 
-        self.Label2 = tk.Label(top, anchor='w')
-        self.shooter_lables.append(self.Label2)
+        """
+            -------  Shooter labels  ---------
+        """
 
-        self.Label3 = tk.Label(top, anchor='w')
-        self.shooter_lables.append(self.Label3)
+        self.Frame_labels = tk.Frame(top, height=100, width=200)
+        self.Frame_labels.grid(row=0, column=0, sticky="NSEW")
+        self.Frame_labels.configure(
+            relief='groove',
+            borderwidth="2",
+            background="#d9d9d9",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black"
+        )
 
-        self.Label4 = tk.Label(top, anchor='w')
-        self.shooter_lables.append(self.Label4)
+        self.container_frame = tk.Frame(self.Frame_labels, height=400, width=200)
+        self.container_frame.place(relx=.5, rely=.4, anchor='c')
 
-        self.Label5 = tk.Label(top, anchor='w')
-        self.shooter_lables.append(self.Label5)
+        self.Label_Shooter_Name = tk.Label(self.container_frame)
+        self.Label1 = tk.Label(self.container_frame)
+        self.Label2 = tk.Label(self.container_frame)
+        self.Label3 = tk.Label(self.container_frame)
+        self.Label4 = tk.Label(self.container_frame)
+        self.Label5 = tk.Label(self.container_frame)
 
-        x = 20
-        y = 60
+        self.shooter_lables = [
+            self.Label_Shooter_Name,
+            self.Label1,
+            self.Label2,
+            self.Label3,
+            self.Label4,
+            self.Label5
+        ]
+
+        i=0
         for labels in self.shooter_lables:
-            labels.place(x=x, y=y, height=21, width=200)
-            labels.configure(activebackground="#f9f9f9")
-            labels.configure(activeforeground="black")
-            labels.configure(background="#d9d9d9")
-            labels.configure(disabledforeground="#a3a3a3")
-            labels.configure(foreground="#000000")
-            labels.configure(highlightbackground="#d9d9d9")
-            labels.configure(highlightcolor="black")
-            # labels.configure(text='''Label''')
-            labels.configure(font=("Segoe UI", 13, "bold"))
-            y += 30
+            labels.grid(row=i, sticky="NWSE")
+            labels.configure(
+                activebackground="#f9f9f9",
+                activeforeground="black",
+                background="#d9d9d9",
+                disabledforeground="#a3a3a3",
+                foreground="#000000",
+                highlightbackground="#d9d9d9",
+                highlightcolor="black",
+                text='''Label''',
+                font=("Segoe UI", 15, "bold")
+            )
+            i += 1
+        print(self.Frame_labels.grid_size())
+
 
         """
-            End of shooter labels
+            -------  Log  ---------
         """
 
-        self.Listbox1 = tk.Listbox(top)
-        self.Listbox1.place(x=10, y=450, height=400, width=300)
-        self.Listbox1.configure(background="white")
-        self.Listbox1.configure(disabledforeground="#a3a3a3")
-        self.Listbox1.configure(font="TkFixedFont")
-        self.Listbox1.configure(foreground="#000000")
-        self.Listbox1.configure(highlightbackground="#d9d9d9")
-        self.Listbox1.configure(highlightcolor="black")
-        self.Listbox1.configure(selectbackground="blue")
-        self.Listbox1.configure(selectforeground="white")
-        self.Listbox1.configure(font=("Segoe UI", 14))
-        self.Listbox1.configure(takefocus="0")
+        self.Frame_log = tk.Frame(top, height=100, width=100)
+        self.Frame_log.grid(row=1, column=0, sticky="NSEW")
+        self.Frame_log.grid_rowconfigure(0, weight=1)
+        self.Frame_log.grid_columnconfigure(0, weight=1)
+        self.Frame_log.grid_columnconfigure(1, weight=2)
+        self.Frame_log.grid_columnconfigure(2, weight=1)
+        self.Frame_log.configure(
+            relief='groove',
+            borderwidth="2",
+            background="#d9d9d9",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black"
+        )
 
-        self.Frame1 = tk.Frame(top)
-        self.Frame1.place(x=330, y=20, height=830, width=949)
-        self.Frame1.configure(relief='groove')
-        self.Frame1.configure(borderwidth="2")
-        self.Frame1.configure(relief="groove")
-        self.Frame1.configure(background="#d9d9d9")
-        self.Frame1.configure(highlightbackground="#d9d9d9")
-        self.Frame1.configure(highlightcolor="black")
 
-        self.Image = tk.Label(self.Frame1)
-        self.Image.place(x=9, y=8, height=814, width=931)
-        # self.Image.configure(activebackground="#f9f9f9")
-        # self.Image.configure(activeforeground="black")
-        # self.Image.configure(background="#d9d9d9")
-        # self.Image.configure(disabledforeground="#a3a3a3")
-        # self.Image.configure(foreground="#000000")
-        # self.Image.configure(highlightbackground="#d9d9d9")
-        # self.Image.configure(highlightcolor="black")
-        self.Image.configure(text='''Bild''')
+        self.Listbox1 = tk.Listbox(self.Frame_log)
+        self.Listbox1.grid(column=1, sticky="NSEW")
+        self.Listbox1.configure(
+            background="white",
+            disabledforeground="#a3a3a3",
+            foreground="#000000",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black",
+            selectbackground="blue",
+            selectforeground="white",
+            font=("Segoe UI", 16),
+            takefocus="0"
+        )
+
 
 if __name__ == '__main__':
     vp_start_gui()

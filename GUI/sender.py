@@ -82,13 +82,7 @@ class Toplevel1:
 
         self.Frame_Image = tk.Frame(top)
         self.Frame_Image.place(x=250, y=0, height=450, width=550)
-        self.Frame_Image.configure(
-            # relief='groove',
-            # borderwidth="2",
-            background="#d9d9d9",
-            # highlightbackground="#d9d9d9",
-            # highlightcolor="black",
-        )
+        self.Frame_Image.configure(background="#d9d9d9")
 
         self.Image = tk.Label(self.Frame_Image)
         self.Image.place(relx=.5, rely=.5, height=430, width=530, anchor='c')
@@ -121,7 +115,7 @@ class Toplevel1:
 
 
         """
-            -------  Radio  ---------
+            -------  Radiobuttons  ---------
         """
 
         self.Frame_radio = tk.Frame(top)
@@ -144,11 +138,19 @@ class Toplevel1:
         self.Radiobutton3.grid(row=0, column=1, sticky='W')
         self.Radiobutton4.grid(row=1, column=1, sticky='W')
 
-        self.radiobuttons = []
-        self.radiobuttons.append(self.Radiobutton1)
-        self.radiobuttons.append(self.Radiobutton2)
-        self.radiobuttons.append(self.Radiobutton3)
-        self.radiobuttons.append(self.Radiobutton4)
+        # self.radiobuttons = []
+        # self.radiobuttons.append(self.Radiobutton1)
+        # self.radiobuttons.append(self.Radiobutton2)
+        # self.radiobuttons.append(self.Radiobutton3)
+        # self.radiobuttons.append(self.Radiobutton4)
+
+        self.radiobuttons = [
+            self.Radiobutton1,
+            self.Radiobutton2,
+            self.Radiobutton3,
+            self.Radiobutton4
+        ]
+        
 
         for rb in self.radiobuttons:
             rb.configure(
@@ -176,6 +178,7 @@ class Toplevel1:
         self.Frame_entry.grid_columnconfigure(0, weight=1)
         self.Frame_entry.grid_columnconfigure(1, weight=1)
 
+
         self.Entry_Point = tk.Entry(self.Frame_entry)
         self.Entry_Point.bind('<Key-Return>', sender_support.point_entry)
         self.Entry_Point.bind('<KP_Enter>', sender_support.point_entry)
@@ -187,10 +190,14 @@ class Toplevel1:
         self.Entry_Point.grid(row=1, column=0, padx=20, sticky="")
         self.Entry_Clock.grid(row=1, column=1, padx=20, sticky="")
 
+        # self.entries = []
+        # self.entries.append(self.Entry_Point)
+        # self.entries.append(self.Entry_Clock)
 
-        self.entries = []
-        self.entries.append(self.Entry_Point)
-        self.entries.append(self.Entry_Clock)
+        self.entries = [
+            self.Entry_Point,
+            self.Entry_Clock
+        ]
 
         for entry in self.entries:
             entry.configure(
@@ -212,10 +219,13 @@ class Toplevel1:
         self.Label_point.grid(row=0, column=0, pady=2, sticky='N')
         self.Label_clock.grid(row=0, column=1, pady=2, sticky='N')
 
-
-        self.entry_lbls = []
-        self.entry_lbls.append(self.Label_point)
-        self.entry_lbls.append(self.Label_clock)
+        # self.entry_lbls = []
+        # self.entry_lbls.append(self.Label_point)
+        # self.entry_lbls.append(self.Label_clock)
+        self.entry_lbls = [
+            self.Label_point,
+            self.Label_clock
+        ]
 
         for lbl in self.entry_lbls:
             lbl.configure(
@@ -225,15 +235,21 @@ class Toplevel1:
                 highlightcolor="black",
             )
 
+
         self.Label_PointError = tk.Label(self.Frame_entry)
         self.Label_ClockError = tk.Label(self.Frame_entry)
 
         self.Label_PointError.grid(row=2, column=0, sticky='N')
         self.Label_ClockError.grid(row=2, column=1, sticky='N')
 
-        self.error_lbls = []
-        self.error_lbls.append(self.Label_PointError)
-        self.error_lbls.append(self.Label_ClockError)
+        # self.error_lbls = []
+        # self.error_lbls.append(self.Label_PointError)
+        # self.error_lbls.append(self.Label_ClockError)
+
+        self.error_lbls = [
+            self.Label_PointError,
+            self.Label_ClockError
+        ]
 
         for lbl in self.error_lbls:
             lbl.configure(
