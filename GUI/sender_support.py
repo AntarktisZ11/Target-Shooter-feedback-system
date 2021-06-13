@@ -480,7 +480,7 @@ class Popup(tk.Toplevel):
         # self.overrideredirect(True)
         self.geometry('320x100+240+190') # set the position and size of the popup
 
-        lbl = tk.Label(self, text="Försöker koppla til skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
+        lbl = tk.Label(self, text="Försöker koppla till skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
         lbl.place(relx=.5, rely=.5, anchor='c')
         self.title("Connecting...")
 
