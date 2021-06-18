@@ -10,9 +10,9 @@
 #    May 19, 2021 05:30:26 PM CEST  platform: Windows NT
 #    May 19, 2021 05:56:42 PM CEST  platform: Windows NT
 
-from os import name
 import sys
 import os.path
+from os import listdir
 import figureGen
 import pandas as pd
 import numpy as np
@@ -44,7 +44,6 @@ def onValidate(d, i, S):
             return False
     return True
 
-
 def init(top, gui, *args, **kwargs):
     global w, top_level, root
     w = gui
@@ -55,15 +54,11 @@ def init(top, gui, *args, **kwargs):
     prog_call = sys.argv[0]
     prog_location = os.path.split(prog_call)[0]
 
-    csvfolder = os.path.join(prog_location, "csv")
-    try:
-        shutil.rmtree(csvfolder)
-    except OSError as e:
-        print("Error: %s - %s." % (e.filename, e.strerror))
-    os.mkdir(csvfolder)
+    global DPI
+    DPI = 120
 
     global target
-    target = figureGen.Target([3, 4, 5, 51], totalSize=1.2)
+    target = figureGen.Target([3, 4, 5, 51], totalSize=1)
 
     # Create default image
     update_img(point=None, defaultImg=True)
@@ -72,7 +67,12 @@ def init(top, gui, *args, **kwargs):
     log = pd.DataFrame(columns=['Name', 'Style', 'Point', 'Clock'])
 
     global users
-    users = ['Per Persson','Johan Johansson','Sven Svensson']
+    users = ['Per Persson','Johan Johanssssssson','Sven Svensson']
+    csv_folder = listdir(os.path.join(prog_location, "csv"))
+    for file in csv_folder:
+        name = os.path.splitext(file)[0]
+        users.append(name)
+
     w.TCombobox1.configure(values=users)
 
     global radios
@@ -99,23 +99,30 @@ def init(top, gui, *args, **kwargs):
     --- Socket init --- 
     """
 
-    HOST = '192.168.1.4'
+    HOST = '192.168.1.90'
     PORT = 12345
     global s
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print("Socket created")
 
-    while True:
+    MAX_ATTEMPTS = 50
+    i=1
+    while i <= MAX_ATTEMPTS:
         try:
             s.bind((HOST, PORT))
             print("Bound succesfully")
             break
         except socket.error:
-            print('Bind failed')
-    root.after(500, socket_listen)
+            print(f'Bind {i} failed')
+            root.after(500)
+            if i == MAX_ATTEMPTS:
+                destroy_window()
+        i += 1
 
-    global recive_timer, ping_timer
-    recive_timer, ping_timer = None, None
+    global recive_timer, ping_timer, conn
+    recive_timer, ping_timer, conn = None, None, None
+    
+    socket_listen()
 
     # --- End of init edit ---
 
@@ -185,9 +192,11 @@ def add_item(point, clock=None):
         df.to_csv(filename, index=False)
 
         if not df[column].isnull().values.any(): # If column is full
-            w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
-            w.Entry_Point.bind('<KP_Enter>', _dummy) # Fixes anoyying bug circumventing disabled entry
+            w.Entry_Point.unbind('<Key-Return>') # Fixes anoyying bug circumventing disabled entry
+            w.Entry_Point.unbind('<KP_Enter>') # Fixes anoyying bug circumventing disabled entry
+            
             w.Entry_Point.delete(0, 'end') # Clears entry
+            w.Entry_Clock.delete(0, 'end') # Clears entry
             update_radiobuttons()
             
         if clock == None:
@@ -228,6 +237,12 @@ def format_csv(name):
 
 def _from_combobox(_):
     w.Label_name.focus()
+
+    name = w.TCombobox1.get()
+    if name != "":
+        w.Combobox_tooltip.update(name)
+        w.Combobox_tooltip.enable()
+
     update_radiobuttons()
 
 def update_radiobuttons():
@@ -256,15 +271,13 @@ def update_radiobuttons():
             
             if selectedButton.get() == 0:
                 w.Entry_Point.configure(state='disabled')
+                w.Entry_Clock.configure(state='disabled')
 
 def allow_entry():
     w.Entry_Point.configure(state='normal')
     w.Entry_Point.bind('<Key-Return>', point_entry)
     w.Entry_Point.bind('<KP_Enter>', point_entry)
     w.Entry_Point.focus()
-
-def _dummy(_):
-    pass
 
 def clock_entry(_):
     # w.Label_ClockError.place_forget()
@@ -333,7 +346,7 @@ def update_img(point, clock=None, defaultImg=False):
             target.targetHit(int(point), clock)
         except ValueError:
             target.targetHit(point, clock)
-    target.saveFigure(dpi=80)
+    target.saveFigure(dpi=DPI)
     photo_location = os.path.join(prog_location,"./image.png")
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
@@ -347,25 +360,42 @@ def free_mode():
     if free_mode_check.get() is True:
         w.TCombobox1.set('')
         w.TCombobox1.configure(state='disabled')
+        w.Combobox_tooltip.disable()
         allow_entry()
     else:
         w.TCombobox1.configure(state='readonly')
         w.Entry_Point.configure(state='disabled')
-        w.Entry_Point.bind('<Key-Return>', _dummy) # Fixes anoyying bug circumventing disabled entry
-        w.Entry_Point.bind('<KP_Enter>', _dummy) # Fixes anoyying bug circumventing disabled entry
+        w.Entry_Clock.configure(state='disabled')
+        w.Entry_Point.unbind('<Key-Return>') # Fixes anoyying bug circumventing disabled entry
+        w.Entry_Point.unbind('<KP_Enter>') # Fixes anoyying bug circumventing disabled entry
     update_radiobuttons()
 
 """
     Begining of socket functions
 """
 def socket_listen():
+    print("Starting socket_listen")
     if ping_timer is not None:
+        print(f'Canceling {ping_timer}')
         root.after_cancel(ping_timer)
+        
+    global conn, addr        
+    if conn is not None:
+        print(f'Previously connected to {conn}')
+        readable, writeable, e = select.select([conn], [conn], [conn], 0.2)
+        if readable:
+            print("This was readable!")
+        if writeable:
+            print("This was writeable!")
+        if e:
+            print("This was e!")
+        if writeable and (not readable):
+            print("Should skip this as it is alreday connected!")
+            return
 
     s.listen(1)
     s.setblocking(False)
     print("Socket awaitning connection")
-    global conn, addr
     i=0
     open_popup()
     while True:
@@ -397,10 +427,12 @@ def socket_send(data, data_info):
         conn.sendall(prefix + data)
     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
         print(e)
+        print("From socket_send")
         socket_listen()
         socket_send(data, data_info)
 
 def socket_recive():
+    # print("Reciving")
     FULL_BYTE = int(0xFF)
     msg = b''
     msg_list = []
@@ -414,6 +446,7 @@ def socket_recive():
                 has_read = True
             except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
                 print(e)
+                print("From socket_recive")
                 socket_listen()
                 
         if len(msg) >= 2:
@@ -448,14 +481,23 @@ def act_on_msg(msg_list):
         if data_info == "ping":
             global ping_timer
             if ping_timer is not None:
+                print(f'Canceling {ping_timer}')
                 root.after_cancel(ping_timer)
             ping_timer = root.after(15000, socket_listen)
+            print(f'Scheduling {ping_timer}')
 
         elif data_info == "name":
             shooter_name = encoded_data.decode()
-            users.insert(0, shooter_name)
+            user_name = shooter_name
+            i=1
+            while user_name in users:
+                user_name = f'{shooter_name} ({i})'
+                i+=1
+            users.insert(0, user_name)
+
             w.TCombobox1.configure(values=users)
             w.TCombobox1.current([0])
+
             free_mode_check.set(False)
             free_mode()
             _from_combobox("dummy_param")
@@ -472,6 +514,11 @@ def act_on_msg(msg_list):
             print("Unrecognizeable info: " + data_info)
             print("Was carrying this data: " + str(encoded_data))
 
+
+
+"""
+    -------  Popup  ---------
+"""
 
 class Popup(tk.Toplevel):
     """modal window requires a master"""
@@ -499,17 +546,28 @@ def close_popup():
 
 
 
+"""
+    -------  Clean up and exit  ---------
+"""
+
+def clear_csv_folder():
+    csvfolder = os.path.join(prog_location, "csv")
+    try:
+        shutil.rmtree(csvfolder)
+        os.mkdir(csvfolder)
+    except OSError as e:
+        print("Error: %s - %s." % (e.filename, e.strerror))
+
 def destroy_window():
     # Function which closes the window.
     global top_level
     top_level.destroy()
     top_level = None
 
+def exit():
+    clear_csv_folder()
+    destroy_window()
+
 if __name__ == '__main__':
     import sender
     sender.vp_start_gui()
-
-
-
-
-

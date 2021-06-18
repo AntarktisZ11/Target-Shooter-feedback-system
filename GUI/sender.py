@@ -52,19 +52,25 @@ class Toplevel1:
         _ana1color = '#d9d9d9' # X11 color: 'gray85'
         _ana2color = '#ececec' # Closest X11 color: 'gray92'
         default_font = Tkfont.nametofont("TkDefaultFont")
-        default_font.configure(size=11)
+        default_font.configure(size=13)
 
         root.option_add("*Font", default_font)
         self.style = ttk.Style()
-        if sys.platform == "win32":
-            self.style.theme_use('winnative')
+        # if sys.platform == "win32":
+        #     self.style.theme_use('winnative')
         self.style.configure('.',background=_bgcolor)
         self.style.configure('.',foreground=_fgcolor)
         self.style.configure('.',font="TkDefaultFont")
         self.style.map('.',background=
             [('selected', _compcolor), ('active',_ana2color)])
 
-        top.geometry("800x480+0+0")
+        self.style.configure('TCombobox', selectbackground='white', selectforeground='black')
+        self.style.configure('TCombobox', padding=3)
+        self.style.map('TCombobox', fieldbackground=
+                       [('readonly','white'), ('disabled',_bgcolor)])
+
+
+        top.geometry("800x450+0+0")
         top.minsize(120, 1)
         top.maxsize(1920, 1080)
         top.resizable(0,  0)
@@ -81,11 +87,11 @@ class Toplevel1:
         """
 
         self.Frame_Image = tk.Frame(top)
-        self.Frame_Image.place(x=250, y=0, height=450, width=550)
+        self.Frame_Image.place(x=270, y=0, height=450, width=530)
         self.Frame_Image.configure(background="#d9d9d9")
 
         self.Image = tk.Label(self.Frame_Image)
-        self.Image.place(relx=.5, rely=.5, height=430, width=530, anchor='c')
+        self.Image.place(relx=.5, rely=.5, anchor='c')
         self.Image.configure(
             background="#d9d9d9",
             text='''Bild'''
@@ -97,21 +103,28 @@ class Toplevel1:
         """
 
         self.Label_name = tk.Label(top, text='''Namn: ''')
-        self.Label_name.place(x=30, y=20, height=23, width=50)
+        self.Label_name.place(x=10, y=20, height=23, width=70)
         self.Label_name.configure(
             background="#d9d9d9",
             foreground="#000000",
             highlightbackground="#d9d9d9",
             highlightcolor="black",
             takefocus="",
-            justify="left"
+            justify="right"
         )
 
         self.TCombobox1 = ttk.Combobox(top)
         self.TCombobox1.place(x=80, y=20, height=28, width=150)
-        self.TCombobox1.configure(state='readonly')
-        self.TCombobox1.configure(takefocus="0")
+        self.TCombobox1.configure(
+            state='readonly',
+            takefocus="0"
+        )
         self.TCombobox1.bind('<FocusIn>',sender_support._from_combobox)
+
+        self.tooltip_font = "TkDefaultFont"
+        self.Combobox_tooltip = \
+        ToolTip(self.TCombobox1, self.tooltip_font, "")
+        self.Combobox_tooltip.disable()
 
 
         """
@@ -119,7 +132,7 @@ class Toplevel1:
         """
 
         self.Frame_radio = tk.Frame(top)
-        self.Frame_radio.place(x=30, y=60, height=55, width=200)
+        self.Frame_radio.place(x=10, y=60, height=55, width=230)
         self.Frame_radio.configure(background="#d9d9d9")
         self.Frame_radio.grid_columnconfigure(0, weight=1)
         self.Frame_radio.grid_columnconfigure(1, weight=1)
@@ -138,12 +151,6 @@ class Toplevel1:
         self.Radiobutton3.grid(row=0, column=1, sticky='W')
         self.Radiobutton4.grid(row=1, column=1, sticky='W')
 
-        # self.radiobuttons = []
-        # self.radiobuttons.append(self.Radiobutton1)
-        # self.radiobuttons.append(self.Radiobutton2)
-        # self.radiobuttons.append(self.Radiobutton3)
-        # self.radiobuttons.append(self.Radiobutton4)
-
         self.radiobuttons = [
             self.Radiobutton1,
             self.Radiobutton2,
@@ -151,7 +158,6 @@ class Toplevel1:
             self.Radiobutton4
         ]
         
-
         for rb in self.radiobuttons:
             rb.configure(
                 activebackground="#ececec",
@@ -290,11 +296,11 @@ class Toplevel1:
         """
 
         self.Exit = tk.Button(top)
-        self.Exit.place(x=50, y=400, height=24, width=40)
+        self.Exit.place(x=40, y=400, height=30, width=50)
         self.Exit.configure(activebackground="#ececec")
         self.Exit.configure(activeforeground="#000000")
         self.Exit.configure(background="#d9d9d9")
-        self.Exit.configure(command=sender_support.destroy_window)
+        self.Exit.configure(command=sender_support.exit)
         self.Exit.configure(disabledforeground="#a3a3a3")
         self.Exit.configure(foreground="#000000")
         self.Exit.configure(highlightbackground="#d9d9d9")
@@ -303,7 +309,7 @@ class Toplevel1:
         self.Exit.configure(text='''Exit''')
 
         self.Button_Undo = tk.Button(top)
-        self.Button_Undo.place(x=130, y=400, height=24, width=73)
+        self.Button_Undo.place(x=140, y=400, height=30, width=80)
         self.Button_Undo.configure(activebackground="#ececec")
         self.Button_Undo.configure(activeforeground="#000000")
         self.Button_Undo.configure(background="#d9d9d9")
@@ -384,6 +390,7 @@ class Toplevel1:
 # http://code.activestate.com/recipes/576688-tooltip-for-tkinter/
 # Modified by Rozen to remove Tkinter import statements and to receive
 # the font as an argument.
+# Modified by Antarktis to add enableing/disabling of tooltip
 # ======================================================
 
 from time import time, localtime, strftime
@@ -433,11 +440,7 @@ class ToolTip(tk.Toplevel):
                 font=tooltip_font,
                 aspect=1000).grid()
 
-        # Add bindings to the widget.  This will NOT override
-        # bindings that the widget already has
-        self.wdgt.bind('<Enter>', self.spawn, '+')
-        self.wdgt.bind('<Leave>', self.hide, '+')
-        self.wdgt.bind('<Motion>', self.move, '+')
+        self.enable()
 
     def spawn(self, event=None):
         """
@@ -499,6 +502,29 @@ class ToolTip(tk.Toplevel):
         Updates the Tooltip with a new message. Added by Rozen
         """
         self.msgVar.set(msg)
+    
+    def enable(self):
+        """
+        Enable the Tooltip by rebinding. Added by Antarktis
+        """
+        # Add bindings to the widget.  This will NOT override
+        # bindings that the widget already has
+        # Modfied by Antartkis to add bind id
+
+        self.bind_id_spawn = self.wdgt.bind('<Enter>', self.spawn, '+')
+        self.bind_id_hide = self.wdgt.bind('<Leave>', self.hide, '+')
+        self.bind_id_move = self.wdgt.bind('<Motion>', self.move, '+')
+
+    def disable(self):
+        """
+        Disable the Tooltip by unbinding following. Added by Antarktis
+        """
+
+        self.wdgt.unbind('<Enter>', self.bind_id_spawn)
+        self.wdgt.unbind('<Leave>', self.bind_id_hide)
+        self.wdgt.unbind('<Motion>', self.bind_id_move)
+
+
 
 # ===========================================================
 #                   End of Class ToolTip
