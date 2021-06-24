@@ -5,7 +5,7 @@ import os
 
 
 class Target:
-	def __init__(self, pointRange, pointDisplayDir=3, totalSize=1):
+	def __init__(self, pointRange, pointDisplayDir=3, totalSize=1, dpi=100):
 		# Org pointRange order: [low, ..., high]
 		self.pointRange = pointRange
 		self.pointRange.reverse()
@@ -13,6 +13,7 @@ class Target:
 
 		self.pointDisplayDir = pointDisplayDir # The direction of ring point text (1-12)
 		self.totalSize = totalSize
+		self.dpi = dpi
 		
 		self.wedgeNr = 0
 		self.cmap = plt.get_cmap("Set1") # Set colormap
@@ -41,6 +42,7 @@ class Target:
 
 	def getMissColor(self):
 		return [0.8, 0, 0, 0.9]
+
 
 	# Create full target plot
 	def targetHit(self, point, dir=None):
@@ -113,7 +115,11 @@ class Target:
 			self.ax.pie([1], radius=totalSize, colors=[self.getMissColor()], 
 			wedgeprops=dict(width=totalSize, edgecolor='black'), startangle=45,
 			autopct=lambda txt: "Miss", pctdistance=0, textprops=dict(color='white', size='xx-large'))
+		
+		self.saveFigure(point, dir)
 	
+
+
 
 	# Only for first image
 	def default(self):
@@ -138,6 +144,10 @@ class Target:
 				self.ax.pie(val, radius=size*(i+1), colors=color, autopct=lambda txt: self.func(val),
 				wedgeprops=dict(width=size, edgecolor='black'), startangle=75,
 				pctdistance=textOffset)
+		
+		self.saveFigure(defaultImg=True)
+
+
 
 
 	def showFullscreen(self):
@@ -146,13 +156,18 @@ class Target:
 		figManager.full_screen_toggle()
 		plt.show() # Display all figures
 	
-	def saveFigure(self, dpi=100):
+
+
+	def saveFigure(self, point=None, dir=None, defaultImg=False):
 		self.ax.set(aspect="equal")
 		my_path = os.path.dirname(os.path.abspath(__file__))
-		my_file = 'image.png'
-		self.fig.savefig(os.path.join(my_path, my_file) , dpi=dpi)
-		# self.fig.savefig('C:/Users/marcu/Desktop/Python Projects/L-O/GUI/test.png', dpi=100)
-		# plt.pause(100)
+		if defaultImg:
+			my_file = "default.png"
+		elif dir is None:
+			my_file = f'{point}.png'
+		else:
+			my_file = f'{point}_{dir}.png'
+		self.fig.savefig(os.path.join(my_path, "images", my_file) , dpi=self.dpi)
 		plt.close('all')
 
 
@@ -172,10 +187,10 @@ if __name__ == "__main__":
 	# target.targetHit(4,8)
 	# target.targetHit("T",3)
 	# target.targetHit("0",12)
-	target.targetHit("X",2, totalSize=1.4)
+	# target.targetHit("X",2, totalSize=1.4)
 
 	# target1.showFullscreen()
-	target.saveFigure(170)
+	# target.saveFigure(170)
 	# target.showFullscreen()
 	# target1.targetHit("x")
 	# target.showFullscreen()
