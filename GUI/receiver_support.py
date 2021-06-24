@@ -12,7 +12,6 @@ import pandas as pd
 import socket
 import select
 import pickle
-# from io import StringIO
 import datetime
 import tkinter as tk
 import tkinter.font as Tkfont
@@ -31,54 +30,77 @@ def init(top, gui, *args, **kwargs):
     prog_call = sys.argv[0]
     prog_location = os.path.split(prog_call)[0]
 
-    global DPI
-    DPI = 180
-
     global target
-    target = figureGen.Target([3, 4, 5, 51], totalSize=1.25)
+    target = figureGen.Target([3, 4, 5, 51], totalSize=1.25, dpi=180)
 
     global HOST, PORT
-    HOST = '192.168.1.4'
+    HOST = '192.168.1.90'
     PORT = 12345
 
     global recive_timer, ping_timer
     recive_timer, ping_timer = None, None
 
+    global msg_list
+    msg_list = []
+
     # Create default image
     update_img(point=None, defaultImg=True)
 
     root.bind('<Tab>', lambda e: open_input("shooter name"))
+    root.bind('<Tab>', lambda e: print("Tab"), add=True)
+    root.bind('<FocusOut>', lambda e: prevent_focus_out())
+    global popup_open, input_open
+    popup_open, input_open = False, False
 
     root.after(2000, socket_connect)
 
     # --- End of init edit ---
 
 
+def prevent_focus_out():
+    print("FocusOut")
+    if not (popup_open or input_open):
+        print("root.focus_force()")
+        root.after(1, lambda: root.focus_force())
 
 def update_img(point, clock=None, defaultImg=False):
+    global photo_location
     if defaultImg:
-        target.default()
+        photo_location = os.path.join(prog_location, "images", './default.png')
+        if not os.path.exists(photo_location):
+            target.default()    #! After this 'photo_location' will exist
+
+    elif clock is None:
+        photo_location = os.path.join(prog_location, "images", f'./{point}.png')
     else:
+        photo_location = os.path.join(prog_location, "images", f'./{point}_{clock}.png')
+
+    if not os.path.exists(photo_location):
+        print("Creating new photo")
         try:
             target.targetHit(int(point), clock)
         except ValueError:
             target.targetHit(point, clock)
-    target.saveFigure(dpi=DPI)
-    photo_location = os.path.join(prog_location,"./image.png")
+
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
+
     w.Image.configure(image=_img0)
 
     if not defaultImg:
-        root.update()   #! This might not be needed
-        root.after(3000) #! Image stays for at least 1.5s before changing
-
+        root.update()
+        root.after(5000)    #! Image stays for at least 3s before changing
+        
 
     """
         -------  Socket functions  ---------
     """
 
 def socket_connect():
+    global ping_timer
+    if ping_timer is not None:
+        root.after_cancel(ping_timer)
+
     global s
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     open_popup()
@@ -87,17 +109,21 @@ def socket_connect():
             s.connect((HOST, PORT))
             s.setblocking(0)
             break
-        except (TimeoutError, ConnectionRefusedError):
+        except (TimeoutError, ConnectionRefusedError, OSError) as e:
+            print(e)
+            if str(e) == "[Errno 106] Transport endpoint is already connected":
+                break
             print("Waiting to connect!")
+            root.after(200)
+#             root.update()
     print("Connected")
     close_popup()
-    root.after(300, open_input, "shooter leader name")
+    # root.after(300, open_input, "shooter leader name")    #! Don't forget to enable for print out
+    root.after(500)
     
-    global recive_timer, ping_timer
+    global recive_timer
     if recive_timer is not None:
         root.after_cancel(recive_timer)
-    if ping_timer is not None:
-        root.after_cancel(ping_timer)
         
     recive_timer = root.after(2000, socket_recive)
     ping_timer = root.after(5000, ping)
@@ -111,14 +137,15 @@ def socket_send(data, data_info):
 
     size = len(data) + len(data_info) + 2   # 2 is for "packet_len"
     FULL_BYTE = int(0xFF)
-    packet_len = bytes([size//FULL_BYTE, size % FULL_BYTE]) # Returns two bytes to store the packet size excluding bytes for TCP protocoll
+    packet_len = bytes([size//FULL_BYTE, size % FULL_BYTE]) # Returns two bytes to store the packet size excluding size of TCP protocoll
     prefix = packet_len + data_info.encode()
     print(len(prefix + data))
     try:
         s.sendall(prefix + data)
     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
         print(e)
-        socket_connect()
+        if not popup_open:
+            socket_connect()
         socket_send(data, data_info)
 
 
@@ -126,7 +153,7 @@ def socket_recive():
     # print("Reciveing")
     FULL_BYTE = int(0xFF)
     msg = b''
-    msg_list = []
+    list = []
     length = 0
     has_read = False
     while True:
@@ -135,9 +162,10 @@ def socket_recive():
             try:
                 msg += s.recv(2048)
                 has_read = True
-            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError, OSError) as e:
                 print(e)
-                socket_connect()
+                if not popup_open:
+                    socket_connect()
 
         if len(msg) >= 2:
 
@@ -148,7 +176,7 @@ def socket_recive():
             if len(msg) >= length and length:
                 data_info = msg[2:10]
                 data = msg[10:length]
-                msg_list.append((data, data_info.decode().strip()))
+                list.append((data, data_info.decode().strip()))
                 msg = msg[length:]
                 length = 0
 
@@ -156,7 +184,10 @@ def socket_recive():
             global recive_timer
             recive_timer = root.after(500, socket_recive)
             if has_read:
-                act_on_msg(msg_list)
+                # act_on_msg(list)
+                global msg_list
+                msg_list.extend(list)
+                root.after(0, act_on_msg)
             return
 
 def ping():
@@ -170,13 +201,14 @@ def ping():
     """
 
 
-def act_on_msg(msg_list):
+def act_on_msg():
+    global msg_list
     while msg_list:
         pickled_data, data_info = msg_list.pop(0)
 
         if data_info == "name":
             name = pickled_data.decode()
-            w.shooter_lables[0].configure(text=name)
+            w.Label_Shooter_Name.configure(text=name)
 
         elif data_info == "shooter":
             data = pickle.loads(pickled_data)
@@ -184,13 +216,16 @@ def act_on_msg(msg_list):
             shooter_df = pd.read_csv(data, index_col=0)
             print(shooter_df)            
 
-            row_list = format_dataframe(shooter_df)
+            shooter_df = format_dataframe(shooter_df)
+            df_row_col_list = [shooter_df.columns.values]
+            df_row_col_list.extend(shooter_df.values)
             i=0
-            for label in w.shooter_lables[1:]:
-                txt = row_list[i]
-                label.configure(text=txt)
-                i += 1
-
+            for label in w.shooter_labels:
+                row = i//4
+                col = i%4
+                label.configure(text=df_row_col_list[row][col])
+                i+=1
+ 
         elif data_info == "log_df":
             data = pickle.loads(pickled_data)
             data.seek(0)
@@ -215,19 +250,8 @@ def format_dataframe(df):
     for key in ['St', 'J', 'L', 'D']:
         df[key] = df[key].astype(str)
         df[key] = df[key].str.split('.')
-        df[key] = df[key].str[0]
-
-    row_list = pd.DataFrame(df).to_string(
-        index=False,
-        justify='center',
-        formatters={
-            "St": "{:^5}".format,
-            "J": "{:^5}".format,
-            "L": "{:^5}".format,
-            "D": "{:^5}".format,
-        }
-        ).splitlines()
-    return row_list
+        df[key] = df[key].str[0]  
+    return df
 
 
 def fill_listbox(df):
@@ -273,18 +297,22 @@ class Popup(tk.Toplevel):
         self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
 
 def open_popup():
+    global popup_open
+    popup_open = True
+
     root.popup = Popup(root)
-    root.update()
 
 def close_popup():
-    root.popup.destroy()
+    global popup_open
+    popup_open = False
 
+    root.popup.destroy()
 
 class InputPopup(tk.Toplevel):
     """modal window requires a master"""
     def __init__(self, master, input_type, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
-        self.geometry('320x150+500+500')
+        self.geometry('360x150+480+500')
         self.title("Connecting...")
 
         self.input_type = input_type
@@ -317,7 +345,7 @@ class InputPopup(tk.Toplevel):
 
         if input_type == "shooter name":
             self.lbl.configure(text="Mata in namn, tex. (John Doe)")
-            self.entry.bind('<Escape>', lambda e: self.destroy())
+            self.entry.bind('<Escape>', lambda e: close_input())
 
         elif input_type == "shooter leader name":
             self.lbl.configure(text="Mata in skytte ledarens namn, tex. (L-O Nilsson)")
@@ -335,7 +363,7 @@ class InputPopup(tk.Toplevel):
     def send_entry(self, data_info):
         data_bytes = self.entry.get().encode()
         socket_send(data_bytes, data_info)
-        self.destroy()
+        close_input()
 
     def verify_entry(self, _):
         self.lbl_entry_error.place_forget()
@@ -372,13 +400,20 @@ class InputPopup(tk.Toplevel):
 
 
 def open_input(input_type):
+    global input_open
+    if input_open:
+        print("Prevented double input windows")
+        return
+    input_open = True
+
     # input_type is one of "shooter name", "shooter leader name" or "date"
     root.input = InputPopup(root, input_type)
-    root.update()
 
 def close_input():
-    root.input.destroy()
+    global input_open
+    input_open = False
 
+    root.input.destroy()
 
 def destroy_window():
     # Function which closes the window.

@@ -113,29 +113,36 @@ class Toplevel1:
             highlightcolor="black"
         )
 
+        MAX_ROWS = 6
+        MAX_COLUMNS = 4
         self.container_frame = tk.Frame(self.Frame_labels, height=400, width=200)
         self.container_frame.place(relx=.5, rely=.4, anchor='c')
+        for i in range(MAX_ROWS):
+            self.container_frame.grid_rowconfigure(i, weight=1)
+
 
         self.Label_Shooter_Name = tk.Label(self.container_frame)
-        self.Label1 = tk.Label(self.container_frame)
-        self.Label2 = tk.Label(self.container_frame)
-        self.Label3 = tk.Label(self.container_frame)
-        self.Label4 = tk.Label(self.container_frame)
-        self.Label5 = tk.Label(self.container_frame)
+        self.Label_Shooter_Name.grid(row=0, columnspan=MAX_COLUMNS, sticky="NWSE")
+        self.Label_Shooter_Name.configure(
+            activebackground="#f9f9f9",
+            activeforeground="black",
+            background="#d9d9d9",
+            disabledforeground="#a3a3a3",
+            foreground="#000000",
+            highlightbackground="#d9d9d9",
+            highlightcolor="black",
+            text='''Shooter Name''',
+            font=("Segoe UI", 15, "bold")
+        )
 
-        self.shooter_lables = [
-            self.Label_Shooter_Name,
-            self.Label1,
-            self.Label2,
-            self.Label3,
-            self.Label4,
-            self.Label5
-        ]
 
-        i=0
-        for labels in self.shooter_lables:
-            labels.grid(row=i, sticky="NWSE")
-            labels.configure(
+        self.shooter_labels = []
+        for n in range( (MAX_ROWS-1) * MAX_COLUMNS):
+            self.shooter_labels.append(tk.Label(self.container_frame))
+            row = (n // MAX_COLUMNS) + 1
+            col = n % MAX_COLUMNS
+            self.shooter_labels[n].grid(row=row, column=col, sticky="NWSE")
+            self.shooter_labels[n].configure(
                 activebackground="#f9f9f9",
                 activeforeground="black",
                 background="#d9d9d9",
@@ -143,12 +150,10 @@ class Toplevel1:
                 foreground="#000000",
                 highlightbackground="#d9d9d9",
                 highlightcolor="black",
-                text='''Label''',
+                text=f' {row},{col} ',
                 font=("Segoe UI", 15, "bold")
-            )
-            i += 1
-        print(self.Frame_labels.grid_size())
-
+            )       
+    
 
         """
             -------  Log  ---------
