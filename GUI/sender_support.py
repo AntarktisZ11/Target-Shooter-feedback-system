@@ -13,6 +13,7 @@
 import sys
 import os.path
 from os import listdir
+from tkinter.constants import ANCHOR
 import figureGen
 import pandas as pd
 import numpy as np
@@ -54,11 +55,8 @@ def init(top, gui, *args, **kwargs):
     prog_call = sys.argv[0]
     prog_location = os.path.split(prog_call)[0]
 
-    global DPI
-    DPI = 120
-
     global target
-    target = figureGen.Target([3, 4, 5, 51], totalSize=1)
+    target = figureGen.Target([3, 4, 5, 51], totalSize=1, dpi=120)
 
     # Create default image
     update_img(point=None, defaultImg=True)
@@ -225,15 +223,15 @@ def add_item(point, clock=None):
     socket_send(pickle.dumps(buffer), "log_df")
     socket_send(pickle.dumps((point, clock)), "new_hit")
 
-def format_csv(name):
-    filename = os.path.join(prog_location, "csv", str(name)+".csv")
-    df = pd.read_csv(filename, squeeze=True)
-    df = df.fillna('-')
-    for key in ['St', 'J', 'L', 'D']:
-        df[key] = df[key].astype(str)
-        df[key] = df[key].str.split('.')
-        df[key] = df[key].str[0]
-    df.to_csv(filename, index=False)
+# def format_csv(name):
+#     filename = os.path.join(prog_location, "csv", str(name)+".csv")
+#     df = pd.read_csv(filename, squeeze=True)
+#     df = df.fillna('-')
+#     for key in ['St', 'J', 'L', 'D']:
+#         df[key] = df[key].astype(str)
+#         df[key] = df[key].str.split('.')
+#         df[key] = df[key].str[0]
+#     df.to_csv(filename, index=False)
 
 def _from_combobox(_):
     w.Label_name.focus()
@@ -339,17 +337,27 @@ def point_entry(_, update=True):
     return True
 
 def update_img(point, clock=None, defaultImg=False):
+    global photo_location
     if defaultImg:
-        target.default()
+        photo_location = os.path.join(prog_location, "images", './default.png')
+        if not os.path.exists(photo_location):
+            target.default()    #! After this 'photo_location' will exist
+
+    elif clock is None:
+        photo_location = os.path.join(prog_location, "images", f'./{point}.png')
     else:
+        photo_location = os.path.join(prog_location, "images", f'./{point}_{clock}.png')
+
+    if not os.path.exists(photo_location):
+        print("Creating new photo")
         try:
             target.targetHit(int(point), clock)
         except ValueError:
             target.targetHit(point, clock)
-    target.saveFigure(dpi=DPI)
-    photo_location = os.path.join(prog_location,"./image.png")
+
     global _img0
     _img0 = tk.PhotoImage(file=photo_location)
+
     w.Image.configure(image=_img0)
 
 def open_print_window():
@@ -524,8 +532,9 @@ class Popup(tk.Toplevel):
     """modal window requires a master"""
     def __init__(self, master, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
-        # self.overrideredirect(True)
-        self.geometry('320x100+240+190') # set the position and size of the popup
+        w=320
+        h=100
+        self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
 
         lbl = tk.Label(self, text="Försöker koppla till skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
         lbl.place(relx=.5, rely=.5, anchor='c')
@@ -543,6 +552,256 @@ def open_popup():
 
 def close_popup():
     root.popup.destroy()
+
+
+
+"""
+    -------  PointWindow  ---------
+"""
+
+class PointWindow(tk.Toplevel):
+    def __init__(self, master, **kwargs):
+        tk.Toplevel.__init__(self, master, **kwargs)
+        self.title("Point Viewer")
+        self.geometry("800x480") # set the position and size of the popup
+        if sys.platform == "linux":
+            top.attributes("-fullscreen", True)
+
+        self.configure(background="#d9d9d9")
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        """
+            -------  Top  ---------
+        """
+
+        self.lbl_top = tk.Label(self, text="Välj användare")
+        self.lbl_top.place(relx=.5, rely=.10, anchor='c')
+        self.lbl_top.configure(
+                background="#d9d9d9",
+                font=("Segoe UI", 16)
+            )       
+
+
+        self.combobox = ttk.Combobox(self, values=users)
+        self.combobox.bind('<FocusIn>', lambda e: self.update_table())
+        self.combobox.bind('<FocusIn>', lambda e: self.table_labels[0].focus(), add=True)
+        self.combobox.set(w.TCombobox1.get())
+        self.combobox.configure(
+            state='readonly',
+            takefocus="0"
+        )
+
+        self.combobox.place(relx=.5, rely=.2, anchor='c')
+
+
+        """
+            -------  Middle  ---------
+        """
+
+        self.table_container = tk.Frame(self, height=350, width=200, background="#d9d9d9")
+        self.table_container.place(relx=.5, rely=.5, anchor='c')
+
+        MAX_ROWS = 5
+        MAX_COLUMNS = 4
+
+        for i in range(MAX_ROWS):
+            self.table_container.grid_rowconfigure(i, weight=1)
+        
+        for i in range(MAX_COLUMNS):
+            self.table_container.grid_columnconfigure(i, weight=1)
+
+        self.table_labels = []
+        for n in range( MAX_ROWS * MAX_COLUMNS ):
+            self.table_labels.append(tk.Label(self.table_container))
+            row = n // MAX_COLUMNS
+            col = n % MAX_COLUMNS
+            self.table_labels[n].grid(row=row, column=col, padx=10 ,sticky="NWSE")
+            self.table_labels[n].configure(
+                background="#d9d9d9",
+                text=f' {row},{col} ',
+                font=("Segoe UI", 18, "bold")
+            )       
+
+
+        """
+            -------  Bottom  ---------
+        """
+
+        self.button_close = tk.Button(self, text="Tillbaka", command=close_point_window)
+        self.button_close.place(relx=.5, rely=.85, anchor='c')
+
+
+        """
+            -------  Final  ---------
+        """
+
+        self.update_table()
+
+        # The following commands keep the popup on top.
+        # Remove these if you want a program with 2 responding windows.
+        # These commands must be at the end of __init__
+        self.transient(master) # set to be on top of the main window
+        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
+
+    def update_table(self):
+        user = self.combobox.get()
+        if user == '':
+            return
+        user_df = self.format_dataframe(self.get_user_df(user))
+        df_row_col_list = [user_df.columns.values]
+        df_row_col_list.extend(user_df.values)
+        i=0
+        for label in self.table_labels:
+            row = i//4
+            col = i%4
+            label.configure(text=df_row_col_list[row][col])
+            i+=1
+    
+    def format_dataframe(self, df):
+        df = df.fillna('-')
+        for key in ['St', 'J', 'L', 'D']:
+            df[key] = df[key].astype(str)
+            df[key] = df[key].str.split('.')
+            df[key] = df[key].str[0]  
+        return df
+    
+    def get_user_df(self, name):
+        filename = os.path.join(prog_location, "csv", str(name)+".csv")
+        df = pd.read_csv(filename, squeeze=True)
+        return df
+
+
+def open_point_window():
+    root.point_window = PointWindow(root)
+
+def close_point_window():
+    root.point_window.destroy()
+
+
+"""
+    -------  HelpWindow  ---------
+"""
+
+class Help(tk.Toplevel):
+    """modal window requires a master"""
+    def __init__(self, master, **kwargs):
+        tk.Toplevel.__init__(self, master, **kwargs)
+        self.title("Help")
+        w, h = 320, 270
+        self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
+
+        # self.configure(background="#d9d9d9")
+
+        self.help_texts = [\
+'''\
+1. Välj ett namn i menyn till vänster
+2. Välj ett av skyttestilarna
+3. Mata in poäng (51, 5, 4, 3,
+    T (= Träff i figur),
+    0 (= Träff i figur),
+    X (= Bom)
+4. Mata in klockslag om möjligt (1-12)\
+''',
+'''\
+Du kan öppna 'Träff tabell' för att se
+träfftabellerna för varje skytt.\
+''',
+'''\
+Du kan aktivera 'Fritt läge
+[Experimentell]' under 'Inställnigar'.
+
+Med den så är inmatningen inte 
+kopplad till någon skytt och man
+kan mata in obegränsat.\
+'''
+]
+
+        self.current_text_nr = 0
+
+        self.lbl = tk.Label(self, text=self.help_texts[0], justify="left", font=("Segoe UI", 13))
+        self.lbl.place(relx=.5, rely=.4, anchor='c')
+
+
+        self.button_prev = tk.Button(self, text="Bakåt", command=self.prev_help)
+        self.button_prev.place(relx=.2, rely=.85, anchor='c')
+
+        self.button_close = tk.Button(self, text="Ok", command=close_help)
+        self.button_close.place(relx=.5, rely=.85, anchor='c')
+
+        self.button_next = tk.Button(self, text="Nästa", command=self.next_help)
+        self.button_next.place(relx=.8, rely=.85, anchor='c')
+
+        # The following commands keep the popup on top.
+        # Remove these if you want a program with 2 responding windows.
+        # These commands must be at the end of __init__
+        self.transient(master) # set to be on top of the main window
+        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
+
+    def next_help(self):
+        total_help_texts = len(self.help_texts)
+        self.current_text_nr = (self.current_text_nr + 1) % total_help_texts
+        self.lbl['text'] = self.help_texts[self.current_text_nr]
+    
+    def prev_help(self):
+        total_help_texts = len(self.help_texts)
+        self.current_text_nr = (self.current_text_nr - 1) % total_help_texts
+        self.lbl['text'] = self.help_texts[self.current_text_nr]
+
+
+def open_help():
+    root.help = Help(root)
+
+def close_help():
+    root.help.destroy()
+
+
+"""
+    -------  Exit verification popup  ---------
+"""
+
+class ExitPopup(tk.Toplevel):
+    """modal window requires a master"""
+    def __init__(self, master, **kwargs):
+        tk.Toplevel.__init__(self, master, **kwargs)
+        self.title("Connecting...")
+        w, h = 320, 170
+        self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
+
+        # self.configure(background="#d9d9d9")
+
+        txt=\
+'''\
+Avsluta program?
+
+Kommer rensa skytte-data!\
+'''
+
+        lbl = tk.Label(self, text=txt, font=("Segoe UI", 11, "bold"))
+        lbl.place(relx=.5, rely=.4, anchor='c')
+
+        self.button_quit = tk.Button(self, text="Avsluta", command=exit)
+        self.button_quit.place(relx=.3, rely=.85, anchor='c')
+
+        self.button_cancel = tk.Button(self, text="Avbryt", command=close_exit_popup)
+        self.button_cancel.place(relx=.7, rely=.85, anchor='c')
+
+        # The following commands keep the popup on top.
+        # Remove these if you want a program with 2 responding windows.
+        # These commands must be at the end of __init__
+        self.transient(master) # set to be on top of the main window
+        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
+
+def open_exit_popup():
+    root.exit_popup = ExitPopup(root)
+
+def close_exit_popup():
+    root.exit_popup.destroy()
+
+
+
+
 
 
 

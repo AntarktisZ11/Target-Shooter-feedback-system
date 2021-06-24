@@ -70,7 +70,7 @@ class Toplevel1:
                        [('readonly','white'), ('disabled',_bgcolor)])
 
 
-        top.geometry("800x450+0+0")
+        top.geometry("800x450")
         top.minsize(120, 1)
         top.maxsize(1920, 1080)
         top.resizable(0,  0)
@@ -300,7 +300,7 @@ class Toplevel1:
         self.Exit.configure(activebackground="#ececec")
         self.Exit.configure(activeforeground="#000000")
         self.Exit.configure(background="#d9d9d9")
-        self.Exit.configure(command=sender_support.exit)
+        self.Exit.configure(command=sender_support.open_exit_popup)
         self.Exit.configure(disabledforeground="#a3a3a3")
         self.Exit.configure(foreground="#000000")
         self.Exit.configure(highlightbackground="#d9d9d9")
@@ -344,9 +344,15 @@ class Toplevel1:
                 variable=sender_support.free_mode_check,
                 command=sender_support.free_mode,
                 label="Fritt läge [Experimentell]")
+        # self.menubar.add_command(
+        #         command=sender_support.open_print_window,
+        #         label="Skriv ut")
         self.menubar.add_command(
-                command=sender_support.open_print_window,
-                label="Skriv ut")
+                command=sender_support.open_point_window,
+                label="Träff tabell")
+        self.menubar.add_command(
+                command=sender_support.open_help,
+                label="Hjälp")
 
     @staticmethod
     def popup1(event, *args, **kwargs):
@@ -505,7 +511,7 @@ class ToolTip(tk.Toplevel):
     
     def enable(self):
         """
-        Enable the Tooltip by rebinding. Added by Antarktis
+        Enables the Tooltip by rebinding. Added by Antarktis
         """
         # Add bindings to the widget.  This will NOT override
         # bindings that the widget already has
@@ -517,7 +523,7 @@ class ToolTip(tk.Toplevel):
 
     def disable(self):
         """
-        Disable the Tooltip by unbinding following. Added by Antarktis
+        Disables the Tooltip by unbinding. Added by Antarktis
         """
 
         self.wdgt.unbind('<Enter>', self.bind_id_spawn)
