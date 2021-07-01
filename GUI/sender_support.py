@@ -11,9 +11,8 @@
 #    May 19, 2021 05:56:42 PM CEST  platform: Windows NT
 
 import sys
-import os.path
-from os import listdir
-from tkinter.constants import ANCHOR
+import os
+
 import figureGen
 import pandas as pd
 import numpy as np
@@ -24,7 +23,6 @@ import pickle
 from io import StringIO
 
 import tkinter as tk
-
 import tkinter.ttk as ttk
 
 def set_Tk_var():
@@ -66,7 +64,7 @@ def init(top, gui, *args, **kwargs):
 
     global users
     users = ['Per Persson','Johan Johanssssssson','Sven Svensson']
-    csv_folder = listdir(os.path.join(prog_location, "csv"))
+    csv_folder = os.listdir(os.path.join(prog_location, "csv"))
     for file in csv_folder:
         name = os.path.splitext(file)[0]
         users.append(name)
@@ -223,16 +221,6 @@ def add_item(point, clock=None):
     socket_send(pickle.dumps(buffer), "log_df")
     socket_send(pickle.dumps((point, clock)), "new_hit")
 
-# def format_csv(name):
-#     filename = os.path.join(prog_location, "csv", str(name)+".csv")
-#     df = pd.read_csv(filename, squeeze=True)
-#     df = df.fillna('-')
-#     for key in ['St', 'J', 'L', 'D']:
-#         df[key] = df[key].astype(str)
-#         df[key] = df[key].str.split('.')
-#         df[key] = df[key].str[0]
-#     df.to_csv(filename, index=False)
-
 def _from_combobox(_):
     w.Label_name.focus()
 
@@ -280,7 +268,7 @@ def allow_entry():
 def clock_entry(_):
     # w.Label_ClockError.place_forget()
     w.Label_ClockError.grid_remove()
-    root.update()
+    root.update_idletasks()
     point = w.Entry_Point.get()
     clock = w.Entry_Clock.get()
 
@@ -298,7 +286,7 @@ def clock_entry(_):
 
 def point_entry(_, update=True):
     w.Label_PointError.grid_remove()
-    root.update()
+    root.update_idletasks()
     point = w.Entry_Point.get()
 
     # Convert elements to str to compare to "point"
@@ -360,9 +348,6 @@ def update_img(point, clock=None, defaultImg=False):
 
     w.Image.configure(image=_img0)
 
-def open_print_window():
-    print('sender_support.open_print_window', flush=True)
-
 def free_mode():
     print('sender_support.free_mode', flush=True)
     if free_mode_check.get() is True:
@@ -378,9 +363,11 @@ def free_mode():
         w.Entry_Point.unbind('<KP_Enter>') # Fixes anoyying bug circumventing disabled entry
     update_radiobuttons()
 
+
 """
     Begining of socket functions
 """
+
 def socket_listen():
     print("Starting socket_listen")
     if ping_timer is not None:
@@ -548,7 +535,7 @@ class Popup(tk.Toplevel):
 
 def open_popup():
     root.popup = Popup(root)
-    root.update()
+    root.update_idletasks()
 
 def close_popup():
     root.popup.destroy()
@@ -565,7 +552,7 @@ class PointWindow(tk.Toplevel):
         self.title("Point Viewer")
         self.geometry("800x480") # set the position and size of the popup
         if sys.platform == "linux":
-            top.attributes("-fullscreen", True)
+            self.attributes("-fullscreen", True)
 
         self.configure(background="#d9d9d9")
 
@@ -629,7 +616,7 @@ class PointWindow(tk.Toplevel):
             -------  Bottom  ---------
         """
 
-        self.button_close = tk.Button(self, text="Tillbaka", command=close_point_window)
+        self.button_close = tk.Button(self, text="Tillbaka", command=self.destroy)
         self.button_close.place(relx=.5, rely=.85, anchor='c')
 
 
@@ -661,7 +648,7 @@ class PointWindow(tk.Toplevel):
     
     def format_dataframe(self, df):
         df = df.fillna('-')
-        for key in ['St', 'J', 'L', 'D']:
+        for key in df.columns.values:
             df[key] = df[key].astype(str)
             df[key] = df[key].str.split('.')
             df[key] = df[key].str[0]  
@@ -681,6 +668,113 @@ def close_point_window():
 
 
 """
+    -------  PrintWindow  ---------
+"""
+
+class PrintWindow(PointWindow):
+    import pdflatex
+    import jinja2
+    def __init__(self, master, **kwargs):
+        PointWindow.__init__(self, master, **kwargs)
+        self.title("Print Window")
+
+        env = self.pdflatex.JINJA2_ENV
+        env['loader'] = self.jinja2.FileSystemLoader(os.path.abspath('.')) #! Change to prog_location ( + subfolder)
+        env = self.jinja2.Environment(**env)
+
+        self.template = env.get_template('template.tex', parent='testing')
+
+
+        """
+            -------  Middle  ---------
+        """
+
+        try:
+            global leader_name
+            self.leader_name = leader_name
+        except NameError as e:
+            print(e)
+            self.leader_name = ""
+
+        self.lbl_leader_name = tk.Label(self)
+        self.lbl_leader_name.configure(
+            text="Skjutledare: \n" + self.leader_name,
+            background="#d9d9d9",
+            justify='left'
+        )
+        self.lbl_leader_name.place(relx=.8, rely=.4, anchor='c')
+
+        self.lbl_user_name = tk.Label(self)
+        self.lbl_user_name.configure(
+            text="Skytt: \n" + self.combobox.get(),
+            background="#d9d9d9",
+            justify='left'
+        )
+        self.lbl_user_name.place(relx=.8, rely=.6, anchor='c')
+        self.combobox.bind('<FocusIn>', lambda e: self.update_user_name_lbl(), add=True)
+        
+
+        """
+            -------  Bottom  ---------
+        """
+        
+        self.button_print = tk.Button(self, text="Print PDF", command=self.print_pdf)
+        self.button_print.place(relx=.7, rely=.85, anchor='c')
+
+        self.button_close.place_configure(relx=.3)
+
+    def update_user_name_lbl(self):
+        self.lbl_user_name.configure(
+            text="Skytt: \n" + self.combobox.get()
+        )
+
+    def print_pdf(self):
+        user = self.combobox.get()
+        if user == '':
+            print("No user specified")
+            return
+        pdfl = self.pdflatex.PDFLaTeX.from_jinja2_template(self.template, user,
+            data_frame_values = self.get_formated_df(user),
+            leader_name='L-O Nilsson',
+            shooter_name=user,
+            date=r'\today\ \currenttime')
+        
+        save_location = os.path.join(prog_location, 'PDFs')
+        pdf, log, cp = pdfl.create_pdf(keep_pdf_file=True, dir=save_location)
+        print(cp, "\n\nPDF created!" )
+        pdf_fullpath = os.path.join(save_location, user + '.pdf')
+        if sys.platform == "linux":
+            import cups
+            conn = cups.Connection()
+            printers = conn.getPrinters()
+            printer_name = printers.keys()[0]
+            conn.printFile(printer_name, pdf_fullpath ,"" ,{})
+        if sys.platform == "win32":
+            os.startfile(pdf_fullpath, "open")
+            # os.startfile(pdf_fullpath, "print") #! Not working for some reason: [WinError 1155]
+    def get_formated_df(self, user):
+        user_df = self.latex_format_dataframe(self.get_user_df(user))
+        df_row_col_list = [user_df.columns.values]
+        df_row_col_list.extend(user_df.values)
+        df_col_row_list = np.array(df_row_col_list).T
+        return df_col_row_list
+
+    def latex_format_dataframe(self, df):
+        df = super().format_dataframe(df)
+        for key in df.columns.values:
+            df[key] = df[key].str.replace('51', '$5^{1}$')
+        return df
+    
+
+def open_print_window():
+    root.print_window = PrintWindow(root)
+
+def close_print_window():
+    root.print_window.destroy()
+
+
+
+"""
     -------  HelpWindow  ---------
 """
 
@@ -689,7 +783,7 @@ class Help(tk.Toplevel):
     def __init__(self, master, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
         self.title("Help")
-        w, h = 320, 270
+        w, h = 370, 270
         self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
 
         # self.configure(background="#d9d9d9")
@@ -765,7 +859,7 @@ class ExitPopup(tk.Toplevel):
     """modal window requires a master"""
     def __init__(self, master, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
-        self.title("Connecting...")
+        self.title("ExitPopup")
         w, h = 320, 170
         self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
 
@@ -801,21 +895,23 @@ def close_exit_popup():
 
 
 
-
-
-
-
 """
     -------  Clean up and exit  ---------
 """
 
-def clear_csv_folder():
-    csvfolder = os.path.join(prog_location, "csv")
+def clear_folder(foldername):
+    folder = os.path.join(prog_location, foldername)
     try:
-        shutil.rmtree(csvfolder)
-        os.mkdir(csvfolder)
+        shutil.rmtree(folder)
+        os.mkdir(folder)
     except OSError as e:
         print("Error: %s - %s." % (e.filename, e.strerror))
+
+def clear_pdf_folder():
+    clear_folder('PDFs')
+
+def clear_csv_folder():
+    clear_folder('csv')
 
 def destroy_window():
     # Function which closes the window.
@@ -824,6 +920,7 @@ def destroy_window():
     top_level = None
 
 def exit():
+    clear_pdf_folder()
     clear_csv_folder()
     destroy_window()
 

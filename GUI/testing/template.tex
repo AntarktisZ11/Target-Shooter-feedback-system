@@ -1,0 +1,51 @@
+%#
+%# Jinja2 LaTeX template
+%#
+\documentclass[a5paper, landscape, 12pt]{article}
+%# \usepackage[T1]{fontenc}
+%# \usepackage[utf8]{inputenc}
+\usepackage{setspace}
+\usepackage[yyyymmdd,hhmm]{datetime} %# Not fully neccecary, used for '\today\ \currenttime'
+
+%# For full page utilization
+\usepackage{fullpage}
+\usepackage[marginparsep=0pt, marginparwidth=0pt]{geometry}
+%# 
+%# \usepackage{showframe} %# Use to show page margins
+
+\pagenumbering{gobble} %# Remove pagenumber
+
+\begin{document}
+\Large %# Font size
+
+\noindent
+%# Surround minipage with fbox{} to see size
+\begin{minipage}[h]{0.7\textwidth}
+    \vspace{2cm} %# Vertical centering
+    Bortans Jaktskyttebana\\
+    Resultat\\ \\
+    \onehalfspacing %# Set row spacing until minipage end
+    %# \doublespacing
+    \begin{tabular}{l @{\hspace{0.7cm}} l @{\hspace{1cm}} c c c c}
+        %% for col in data_frame_values
+        \VAR{loop.index} & \VAR{col[0]} & \VAR{col[1]} & \VAR{col[2]} & \VAR{col[3]} & \VAR{col[4]} \\
+        %% endfor
+
+    \end{tabular}
+\end{minipage}
+%# Surround minipage with fbox{} to see size
+\begin{minipage}[h]{0.3\textwidth}
+    \vspace{2cm} %# Vertical centering
+    \begin{tabular}{l}
+        Skjutledare: \\
+        %# \makebox[4cm]{\dotfill} \\ \\
+        \VAR{leader_name} \\ \\ %# Will be replaced by value to key 'leader_name
+        Skytt: \\
+        \VAR{shooter_name} \\ \\ %# Will be replaced
+        Datum: \\
+        %# \today\ \currenttime \\
+        \VAR{date} \\ %# Will be replaced
+	\end{tabular}
+\end{minipage}
+
+\end{document}

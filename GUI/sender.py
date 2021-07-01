@@ -344,9 +344,9 @@ class Toplevel1:
                 variable=sender_support.free_mode_check,
                 command=sender_support.free_mode,
                 label="Fritt läge [Experimentell]")
-        # self.menubar.add_command(
-        #         command=sender_support.open_print_window,
-        #         label="Skriv ut")
+        self.menubar.add_command(
+                command=sender_support.open_print_window,
+                label="Skriv ut")
         self.menubar.add_command(
                 command=sender_support.open_point_window,
                 label="Träff tabell")
