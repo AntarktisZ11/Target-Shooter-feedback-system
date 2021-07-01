@@ -682,7 +682,7 @@ class PrintWindow(PointWindow):
         env['loader'] = self.jinja2.FileSystemLoader(os.path.abspath('.')) #! Change to prog_location ( + subfolder)
         env = self.jinja2.Environment(**env)
 
-        self.template = env.get_template('template.tex', parent='testing')
+        self.template = env.get_template('template.tex')
 
 
         """
