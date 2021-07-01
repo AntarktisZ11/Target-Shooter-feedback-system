@@ -88,7 +88,7 @@ def update_img(point, clock=None, defaultImg=False):
     w.Image.configure(image=_img0)
 
     if not defaultImg:
-        root.update()
+        root.update_idletasks()
         root.after(5000)    #! Image stays for at least 3s before changing
         
 
@@ -301,6 +301,7 @@ def open_popup():
     popup_open = True
 
     root.popup = Popup(root)
+    root.update_idletasks()
 
 def close_popup():
     global popup_open
@@ -313,7 +314,7 @@ class InputPopup(tk.Toplevel):
     def __init__(self, master, input_type, **kwargs):
         tk.Toplevel.__init__(self, master, **kwargs)
         self.geometry('360x150+480+500')
-        self.title("Connecting...")
+        self.title("Input")
 
         self.input_type = input_type
 

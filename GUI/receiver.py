@@ -154,6 +154,15 @@ class Toplevel1:
                 font=("Segoe UI", 15, "bold")
             )       
     
+        self.help_label = tk.Label(self.Frame_labels)
+        self.help_label.configure(
+            activeforeground="#a3a3a3",
+            background="#d9d9d9",
+            text="Tryck <Tab> för ny skytt",
+            font=("Segoe UI", 12)
+        )
+        self.help_label.place(relx=.5, rely=1, anchor='s')
+
 
         """
             -------  Log  ---------
