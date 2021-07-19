@@ -13,10 +13,11 @@
 import sys
 import os
 
-import figureGen
+import figureGen # Local file
+import sender_extra_windows as windows # Local file
+
 import pandas as pd
 import numpy as np
-import shutil
 import socket
 import select
 import pickle
@@ -48,6 +49,7 @@ def init(top, gui, *args, **kwargs):
     w = gui
     top_level = top
     root = top
+
     # --- Start of init edit ---
     global prog_location
     prog_call = sys.argv[0]
@@ -63,7 +65,8 @@ def init(top, gui, *args, **kwargs):
     log = pd.DataFrame(columns=['Name', 'Style', 'Point', 'Clock'])
 
     global users
-    users = ['Per Persson','Johan Johanssssssson','Sven Svensson']
+    users = []
+    # users = ['Per Persson','Johan Johanssssssson','Sven Svensson']
     csv_folder = os.listdir(os.path.join(prog_location, "csv"))
     for file in csv_folder:
         name = os.path.splitext(file)[0]
@@ -90,6 +93,9 @@ def init(top, gui, *args, **kwargs):
     for column in ['St', 'J', 'L', 'D']:
         radios[column].configure(state='disabled')
 
+    windows.init_globals(top, gui, prog_location, users)
+    windows.set_leader_name("L-O Nilsson")
+    windows.open_distance_popup()
 
     """
     --- Socket init --- 
@@ -101,30 +107,31 @@ def init(top, gui, *args, **kwargs):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print("Socket created")
 
-    MAX_ATTEMPTS = 50
-    i=1
-    while i <= MAX_ATTEMPTS:
-        try:
-            s.bind((HOST, PORT))
-            print("Bound succesfully")
-            break
-        except socket.error:
-            print(f'Bind {i} failed')
-            root.after(500)
-            if i == MAX_ATTEMPTS:
-                destroy_window()
-        i += 1
+    # MAX_ATTEMPTS = 50
+    # i=1
+    # while i <= MAX_ATTEMPTS:
+    #     try:
+    #         s.bind((HOST, PORT))
+    #         print("Bound succesfully")
+    #         break
+    #     except socket.error:
+    #         print(f'Bind {i} failed')
+    #         root.after(500)
+    #         if i == MAX_ATTEMPTS:
+    #             destroy_window()
+    #     i += 1
 
+    
     global recive_timer, ping_timer, conn
     recive_timer, ping_timer, conn = None, None, None
-    
-    socket_listen()
+
+    # socket_listen()
 
     # --- End of init edit ---
 
 
 
-def delete_item(_, latest=False):
+def delete_item(_, latest: bool = False):
     if  latest:
         selectedButton.get()
         index = (0,)
@@ -266,7 +273,6 @@ def allow_entry():
     w.Entry_Point.focus()
 
 def clock_entry(_):
-    # w.Label_ClockError.place_forget()
     w.Label_ClockError.grid_remove()
     root.update_idletasks()
     point = w.Entry_Point.get()
@@ -284,7 +290,7 @@ def clock_entry(_):
         root.after(100) # Cause a delay for error label to flash for feedback
         w.Label_ClockError.grid()
 
-def point_entry(_, update=True):
+def point_entry(_, update: bool = True):
     w.Label_PointError.grid_remove()
     root.update_idletasks()
     point = w.Entry_Point.get()
@@ -324,7 +330,7 @@ def point_entry(_, update=True):
         return False
     return True
 
-def update_img(point, clock=None, defaultImg=False):
+def update_img(point, clock=None, defaultImg: bool = False):
     global photo_location
     if defaultImg:
         photo_location = os.path.join(prog_location, "images", './default.png')
@@ -392,7 +398,7 @@ def socket_listen():
     s.setblocking(False)
     print("Socket awaitning connection")
     i=0
-    open_popup()
+    windows.open_network_popup()
     while True:
         try:
             (conn, addr) = s.accept()
@@ -401,13 +407,13 @@ def socket_listen():
             i += 1
             print('/-\|'[i%4]+'\r',end='',flush=True)
     print("Connected")
-    close_popup()
+    windows.close_network_popup()
     global recive_timer
     if recive_timer is not None:
         root.after_cancel(recive_timer)
     recive_timer = root.after(2000, socket_recive)
 
-def socket_send(data, data_info):
+def socket_send(data: bytes, data_info: str):
     data_info = data_info.lower()
     if len(str(data_info)) > 8:
         raise ValueError("Data_info has to be max 8 characters, was: " + str(len(data_info)))
@@ -469,7 +475,7 @@ def socket_recive():
     End of socket functions
 """
 
-def act_on_msg(msg_list):
+def act_on_msg(msg_list: list):
     while msg_list:
         encoded_data, data_info = msg_list.pop(0)
         
@@ -498,8 +504,9 @@ def act_on_msg(msg_list):
             _from_combobox("dummy_param")
 
         elif data_info == "leader":
-            global leader_name
+            # global leader_name
             leader_name = encoded_data.decode()
+            windows.set_leader_name(leader_name)
             print("Current leader is " + leader_name)
 
         elif data_info == "date":
@@ -510,419 +517,11 @@ def act_on_msg(msg_list):
             print("Was carrying this data: " + str(encoded_data))
 
 
-
-"""
-    -------  Popup  ---------
-"""
-
-class Popup(tk.Toplevel):
-    """modal window requires a master"""
-    def __init__(self, master, **kwargs):
-        tk.Toplevel.__init__(self, master, **kwargs)
-        w=320
-        h=100
-        self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
-
-        lbl = tk.Label(self, text="Försöker koppla till skjutardatorn ... ", font=("Segoe UI", 11, "bold"))
-        lbl.place(relx=.5, rely=.5, anchor='c')
-        self.title("Connecting...")
-
-        # The following commands keep the popup on top.
-        # Remove these if you want a program with 2 responding windows.
-        # These commands must be at the end of __init__
-        self.transient(master) # set to be on top of the main window
-        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
-
-def open_popup():
-    root.popup = Popup(root)
-    root.update_idletasks()
-
-def close_popup():
-    root.popup.destroy()
-
-
-
-"""
-    -------  PointWindow  ---------
-"""
-
-class PointWindow(tk.Toplevel):
-    def __init__(self, master, **kwargs):
-        tk.Toplevel.__init__(self, master, **kwargs)
-        self.title("Point Viewer")
-        self.geometry("800x480") # set the position and size of the popup
-        if sys.platform == "linux":
-            self.attributes("-fullscreen", True)
-
-        self.configure(background="#d9d9d9")
-
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-
-        """
-            -------  Top  ---------
-        """
-
-        self.lbl_top = tk.Label(self, text="Välj användare")
-        self.lbl_top.place(relx=.5, rely=.10, anchor='c')
-        self.lbl_top.configure(
-                background="#d9d9d9",
-                font=("Segoe UI", 16)
-            )       
-
-
-        self.combobox = ttk.Combobox(self, values=users)
-        self.combobox.bind('<FocusIn>', lambda e: self.update_table())
-        self.combobox.bind('<FocusIn>', lambda e: self.table_labels[0].focus(), add=True)
-        self.combobox.set(w.TCombobox1.get())
-        self.combobox.configure(
-            state='readonly',
-            takefocus="0"
-        )
-
-        self.combobox.place(relx=.5, rely=.2, anchor='c')
-
-
-        """
-            -------  Middle  ---------
-        """
-
-        self.table_container = tk.Frame(self, height=350, width=200, background="#d9d9d9")
-        self.table_container.place(relx=.5, rely=.5, anchor='c')
-
-        MAX_ROWS = 5
-        MAX_COLUMNS = 4
-
-        for i in range(MAX_ROWS):
-            self.table_container.grid_rowconfigure(i, weight=1)
-        
-        for i in range(MAX_COLUMNS):
-            self.table_container.grid_columnconfigure(i, weight=1)
-
-        self.table_labels = []
-        for n in range( MAX_ROWS * MAX_COLUMNS ):
-            self.table_labels.append(tk.Label(self.table_container))
-            row = n // MAX_COLUMNS
-            col = n % MAX_COLUMNS
-            self.table_labels[n].grid(row=row, column=col, padx=10 ,sticky="NWSE")
-            self.table_labels[n].configure(
-                background="#d9d9d9",
-                text=f' {row},{col} ',
-                font=("Segoe UI", 18, "bold")
-            )       
-
-
-        """
-            -------  Bottom  ---------
-        """
-
-        self.button_close = tk.Button(self, text="Tillbaka", command=self.destroy)
-        self.button_close.place(relx=.5, rely=.85, anchor='c')
-
-
-        """
-            -------  Final  ---------
-        """
-
-        self.update_table()
-
-        # The following commands keep the popup on top.
-        # Remove these if you want a program with 2 responding windows.
-        # These commands must be at the end of __init__
-        self.transient(master) # set to be on top of the main window
-        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
-
-    def update_table(self):
-        user = self.combobox.get()
-        if user == '':
-            return
-        user_df = self.format_dataframe(self.get_user_df(user))
-        df_row_col_list = [user_df.columns.values]
-        df_row_col_list.extend(user_df.values)
-        i=0
-        for label in self.table_labels:
-            row = i//4
-            col = i%4
-            label.configure(text=df_row_col_list[row][col])
-            i+=1
-    
-    def format_dataframe(self, df):
-        df = df.fillna('-')
-        for key in df.columns.values:
-            df[key] = df[key].astype(str)
-            df[key] = df[key].str.split('.')
-            df[key] = df[key].str[0]  
-        return df
-    
-    def get_user_df(self, name):
-        filename = os.path.join(prog_location, "csv", str(name)+".csv")
-        df = pd.read_csv(filename, squeeze=True)
-        return df
-
-
-def open_point_window():
-    root.point_window = PointWindow(root)
-
-def close_point_window():
-    root.point_window.destroy()
-
-
-"""
-    -------  PrintWindow  ---------
-"""
-
-class PrintWindow(PointWindow):
-    import pdflatex
-    import jinja2
-    def __init__(self, master, **kwargs):
-        PointWindow.__init__(self, master, **kwargs)
-        self.title("Print Window")
-
-        env = self.pdflatex.JINJA2_ENV
-        env['loader'] = self.jinja2.FileSystemLoader(os.path.abspath('.')) #! Change to prog_location ( + subfolder)
-        env = self.jinja2.Environment(**env)
-
-        self.template = env.get_template('template.tex')
-
-
-        """
-            -------  Middle  ---------
-        """
-
-        try:
-            global leader_name
-            self.leader_name = leader_name
-        except NameError as e:
-            print(e)
-            self.leader_name = ""
-
-        self.lbl_leader_name = tk.Label(self)
-        self.lbl_leader_name.configure(
-            text="Skjutledare: \n" + self.leader_name,
-            background="#d9d9d9",
-            justify='left'
-        )
-        self.lbl_leader_name.place(relx=.8, rely=.4, anchor='c')
-
-        self.lbl_user_name = tk.Label(self)
-        self.lbl_user_name.configure(
-            text="Skytt: \n" + self.combobox.get(),
-            background="#d9d9d9",
-            justify='left'
-        )
-        self.lbl_user_name.place(relx=.8, rely=.6, anchor='c')
-        self.combobox.bind('<FocusIn>', lambda e: self.update_user_name_lbl(), add=True)
-        
-
-        """
-            -------  Bottom  ---------
-        """
-        
-        self.button_print = tk.Button(self, text="Print PDF", command=self.print_pdf)
-        self.button_print.place(relx=.7, rely=.85, anchor='c')
-
-        self.button_close.place_configure(relx=.3)
-
-    def update_user_name_lbl(self):
-        self.lbl_user_name.configure(
-            text="Skytt: \n" + self.combobox.get()
-        )
-
-    def print_pdf(self):
-        user = self.combobox.get()
-        if user == '':
-            print("No user specified")
-            return
-        pdfl = self.pdflatex.PDFLaTeX.from_jinja2_template(self.template, user,
-            data_frame_values = self.get_formated_df(user),
-            leader_name='L-O Nilsson',
-            shooter_name=user,
-            date=r'\today\ \currenttime')
-        
-        save_location = os.path.join(prog_location, 'PDFs')
-        pdf, log, cp = pdfl.create_pdf(keep_pdf_file=True, dir=save_location)
-        print(cp, "\n\nPDF created!" )
-        pdf_fullpath = os.path.join(save_location, user + '.pdf')
-        if sys.platform == "linux":
-            import cups
-            conn = cups.Connection()
-            printers = conn.getPrinters()
-            printer_name = printers.keys()[0]
-            conn.printFile(printer_name, pdf_fullpath ,"" ,{})
-        if sys.platform == "win32":
-            os.startfile(pdf_fullpath, "open")
-            # os.startfile(pdf_fullpath, "print") #! Not working for some reason: [WinError 1155]
-    def get_formated_df(self, user):
-        user_df = self.latex_format_dataframe(self.get_user_df(user))
-        df_row_col_list = [user_df.columns.values]
-        df_row_col_list.extend(user_df.values)
-        df_col_row_list = np.array(df_row_col_list).T
-        return df_col_row_list
-
-    def latex_format_dataframe(self, df):
-        df = super().format_dataframe(df)
-        for key in df.columns.values:
-            df[key] = df[key].str.replace('51', '$5^{1}$')
-        return df
-    
-
-def open_print_window():
-    root.print_window = PrintWindow(root)
-
-def close_print_window():
-    root.print_window.destroy()
-
-
-
-"""
-    -------  HelpWindow  ---------
-"""
-
-class Help(tk.Toplevel):
-    """modal window requires a master"""
-    def __init__(self, master, **kwargs):
-        tk.Toplevel.__init__(self, master, **kwargs)
-        self.title("Help")
-        w, h = 370, 270
-        self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
-
-        # self.configure(background="#d9d9d9")
-
-        self.help_texts = [\
-'''\
-1. Välj ett namn i menyn till vänster
-2. Välj ett av skyttestilarna
-3. Mata in poäng (51, 5, 4, 3,
-    T (= Träff i figur),
-    0 (= Träff i figur),
-    X (= Bom)
-4. Mata in klockslag om möjligt (1-12)\
-''',
-'''\
-Du kan öppna 'Träff tabell' för att se
-träfftabellerna för varje skytt.\
-''',
-'''\
-Du kan aktivera 'Fritt läge
-[Experimentell]' under 'Inställnigar'.
-
-Med den så är inmatningen inte 
-kopplad till någon skytt och man
-kan mata in obegränsat.\
-'''
-]
-
-        self.current_text_nr = 0
-
-        self.lbl = tk.Label(self, text=self.help_texts[0], justify="left", font=("Segoe UI", 13))
-        self.lbl.place(relx=.5, rely=.4, anchor='c')
-
-
-        self.button_prev = tk.Button(self, text="Bakåt", command=self.prev_help)
-        self.button_prev.place(relx=.2, rely=.85, anchor='c')
-
-        self.button_close = tk.Button(self, text="Ok", command=close_help)
-        self.button_close.place(relx=.5, rely=.85, anchor='c')
-
-        self.button_next = tk.Button(self, text="Nästa", command=self.next_help)
-        self.button_next.place(relx=.8, rely=.85, anchor='c')
-
-        # The following commands keep the popup on top.
-        # Remove these if you want a program with 2 responding windows.
-        # These commands must be at the end of __init__
-        self.transient(master) # set to be on top of the main window
-        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
-
-    def next_help(self):
-        total_help_texts = len(self.help_texts)
-        self.current_text_nr = (self.current_text_nr + 1) % total_help_texts
-        self.lbl['text'] = self.help_texts[self.current_text_nr]
-    
-    def prev_help(self):
-        total_help_texts = len(self.help_texts)
-        self.current_text_nr = (self.current_text_nr - 1) % total_help_texts
-        self.lbl['text'] = self.help_texts[self.current_text_nr]
-
-
-def open_help():
-    root.help = Help(root)
-
-def close_help():
-    root.help.destroy()
-
-
-"""
-    -------  Exit verification popup  ---------
-"""
-
-class ExitPopup(tk.Toplevel):
-    """modal window requires a master"""
-    def __init__(self, master, **kwargs):
-        tk.Toplevel.__init__(self, master, **kwargs)
-        self.title("ExitPopup")
-        w, h = 320, 170
-        self.geometry(f'{w}x{h}+{(800-w)//2}+{(480-h)//2}') # set the position and size of the popup
-
-        # self.configure(background="#d9d9d9")
-
-        txt=\
-'''\
-Avsluta program?
-
-Kommer rensa skytte-data!\
-'''
-
-        lbl = tk.Label(self, text=txt, font=("Segoe UI", 11, "bold"))
-        lbl.place(relx=.5, rely=.4, anchor='c')
-
-        self.button_quit = tk.Button(self, text="Avsluta", command=exit)
-        self.button_quit.place(relx=.3, rely=.85, anchor='c')
-
-        self.button_cancel = tk.Button(self, text="Avbryt", command=close_exit_popup)
-        self.button_cancel.place(relx=.7, rely=.85, anchor='c')
-
-        # The following commands keep the popup on top.
-        # Remove these if you want a program with 2 responding windows.
-        # These commands must be at the end of __init__
-        self.transient(master) # set to be on top of the main window
-        self.grab_set() # hijack all commands from the master (clicks on the main window are ignored)
-
-def open_exit_popup():
-    root.exit_popup = ExitPopup(root)
-
-def close_exit_popup():
-    root.exit_popup.destroy()
-
-
-
-"""
-    -------  Clean up and exit  ---------
-"""
-
-def clear_folder(foldername):
-    folder = os.path.join(prog_location, foldername)
-    try:
-        shutil.rmtree(folder)
-        os.mkdir(folder)
-    except OSError as e:
-        print("Error: %s - %s." % (e.filename, e.strerror))
-
-def clear_pdf_folder():
-    clear_folder('PDFs')
-
-def clear_csv_folder():
-    clear_folder('csv')
-
 def destroy_window():
     # Function which closes the window.
     global top_level
     top_level.destroy()
     top_level = None
-
-def exit():
-    clear_pdf_folder()
-    clear_csv_folder()
-    destroy_window()
 
 if __name__ == '__main__':
     import sender

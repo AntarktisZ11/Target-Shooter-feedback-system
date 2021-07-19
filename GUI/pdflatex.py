@@ -67,9 +67,6 @@ class PDFLaTeX:
             self.add_args({'-interaction': self.interaction_mode})
         
         # dir = self.params.get('-output-directory')
-        print()
-        print(dir)
-        print()
         filename = self.params.get('-jobname')
         
         if filename is None:

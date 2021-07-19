@@ -7,6 +7,7 @@
 *.pyc
 GUI/csv/*.csv
 *.tcl#
+*.pdf
 GUI/.vscode/settings.json
 GUI/testing3.py
 GUI/testing.py
