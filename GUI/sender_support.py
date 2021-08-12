@@ -13,18 +13,21 @@
 import sys
 import os
 
-import figureGen # Local file
-import sender_extra_windows as windows # Local file
+import figureGen  # Local file
+import sender_extra_windows as windows  # Local file
+
+# import sender
+# from sender import Toplevel1
+from socket_stuff import SenderSocket  # ! Have to try and implement to reduce single file length
 
 import pandas as pd
 import numpy as np
-import socket
-import select
+
 import pickle
 from io import StringIO
 
 import tkinter as tk
-import tkinter.ttk as ttk
+
 
 def set_Tk_var():
     global free_mode_check
@@ -32,42 +35,43 @@ def set_Tk_var():
     global selectedButton
     selectedButton = tk.IntVar()
 
+
 def onValidate(d, i, S):
-    if d == '1':
+    if d == "1":
         if S == " ":
-            w.Entry_Point.insert(i, 'X')
+            w.Entry_Point.insert(i, "X")
             w.Entry_Point.configure(validate="key")
             return False
         elif S == ",":
-            w.Entry_Point.insert(i, 'T')
+            w.Entry_Point.insert(i, "T")
             w.Entry_Point.configure(validate="key")
             return False
     return True
 
-def init(top, gui, *args, **kwargs):
+
+def init(top: tk.Tk, gui, *args, **kwargs):
     global w, top_level, root
     w = gui
     top_level = top
     root = top
 
     # --- Start of init edit ---
-    global prog_location
+    global PROG_LOCATION
     prog_call = sys.argv[0]
-    prog_location = os.path.split(prog_call)[0]
+    PROG_LOCATION = os.path.split(prog_call)[0]
 
     global target
     target = figureGen.Target([3, 4, 5, 51], totalSize=1, dpi=120)
 
     # Create default image
-    update_img(point=None, defaultImg=True)
+    update_img_default()
 
     global log
-    log = pd.DataFrame(columns=['Name', 'Style', 'Point', 'Clock'])
+    log = pd.DataFrame(columns=["Name", "Style", "Point", "Clock"])
 
     global users
     users = []
-    # users = ['Per Persson','Johan Johanssssssson','Sven Svensson']
-    csv_folder = os.listdir(os.path.join(prog_location, "csv"))
+    csv_folder = os.listdir(os.path.join(PROG_LOCATION, "csv"))
     for file in csv_folder:
         name = os.path.splitext(file)[0]
         users.append(name)
@@ -75,65 +79,73 @@ def init(top, gui, *args, **kwargs):
     w.TCombobox1.configure(values=users)
 
     global radios
-    radios = {'St': w.radiobuttons[0],
-             'J': w.radiobuttons[1],
-             'L': w.radiobuttons[2],
-             'D': w.radiobuttons[3]}
+    radios = {
+        "St": w.radiobuttons[0],
+        "J": w.radiobuttons[1],
+        "L": w.radiobuttons[2],
+        "D": w.radiobuttons[3],
+    }
 
     w.Label_PointError.grid_remove()
     w.Label_ClockError.grid_remove()
 
-    w.Entry_Clock.configure(state='disabled')
-    w.Entry_Point.configure(state='disabled')
+    w.Entry_Clock.configure(state="disabled")
+    w.Entry_Point.configure(state="disabled")
 
-    vcmd = (root.register(onValidate),
-        '%d', '%i', '%S')
+    vcmd = (root.register(onValidate), "%d", "%i", "%S")
     w.Entry_Point.configure(validate="key", validatecommand=vcmd)
 
-    for column in ['St', 'J', 'L', 'D']:
-        radios[column].configure(state='disabled')
+    for column in ["St", "J", "L", "D"]:
+        radios[column].configure(state="disabled")
 
-    windows.init_globals(top, gui, prog_location, users)
-    windows.set_leader_name("L-O Nilsson")
+    windows.init_globals(top, gui, PROG_LOCATION, users)
+    # windows.set_leader_name("L-O Nilsson")
+
+    """
+    --- Socket init ---
+    """
+
+    global socket
+    socket = SenderSocket.SenderSocket(root, act_on_msg)  # * Init socket
+
     windows.open_distance_popup()
-
-    """
-    --- Socket init --- 
-    """
-
-    HOST = '192.168.1.90'
-    PORT = 12345
-    global s
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("Socket created")
-
-    # MAX_ATTEMPTS = 50
-    # i=1
-    # while i <= MAX_ATTEMPTS:
-    #     try:
-    #         s.bind((HOST, PORT))
-    #         print("Bound succesfully")
-    #         break
-    #     except socket.error:
-    #         print(f'Bind {i} failed')
-    #         root.after(500)
-    #         if i == MAX_ATTEMPTS:
-    #             destroy_window()
-    #     i += 1
-
-    
-    global recive_timer, ping_timer, conn
-    recive_timer, ping_timer, conn = None, None, None
-
-    # socket_listen()
 
     # --- End of init edit ---
 
 
+def delete_user(user: str = None):
+    if user is None:
+        user = w.TCombobox1.get()
+
+    try:
+        users.remove(user)
+        remove_files(user)  # ! Clear csv and pdf
+    except ValueError as e:
+        print(e)
+        print(f"User: {user} not found in list for deletion")
+    if user == w.TCombobox1.get():
+        w.TCombobox1.set("")
+        w.Combobox_tooltip.disable()
+        w.Combobox_tooltip.hide()
+        update_radiobuttons()
+
+    w.TCombobox1.configure(values=users)
+
+
+def remove_files(user):
+    csv_path = os.path.join(PROG_LOCATION, "csv", f"{user}.csv")
+    pdf_path = os.path.join(PROG_LOCATION, "PDFs", f"{user}.pdf")
+
+    for path in [csv_path, pdf_path]:
+        if os.path.exists(path):
+            os.remove(path)
+        else:
+            print("The file does not exist")
+
 
 def delete_item(_, latest: bool = False):
-    if  latest:
-        selectedButton.get()
+    if latest:
+        # selectedButton.get()
         index = (0,)
     else:
         index = w.Listbox1.curselection()
@@ -146,20 +158,19 @@ def delete_item(_, latest: bool = False):
         print("No item selected to delete in listbox")
         return
 
-    if entry['Name'] in [None, '']:
+    if entry["Name"] in [None, ""]:
         pass
     else:
-        filename = os.path.join(prog_location, "csv", str(entry['Name'])+".csv")
-        df = pd.read_csv(filename, squeeze=True, dtype='str')
-        row = df[df[entry['Style']] == entry['Point']].last_valid_index()
-        df.at[row, entry['Style']] = np.nan
+        filename = os.path.join(PROG_LOCATION, "csv", str(entry["Name"]) + ".csv")
+        df = pd.read_csv(filename, squeeze=True, dtype="str")
+        row = df[df[entry["Style"]] == entry["Point"]].last_valid_index()
+        df.at[row, entry["Style"]] = np.nan
         df.to_csv(filename, index=False)
 
-        buffer = StringIO() # Behaves as a txt file but in memory
+        buffer = StringIO()  # Behaves as a txt file but in memory
         df.to_csv(buffer)
-        socket_send(entry['Name'].encode(), "name")
-        socket_send(pickle.dumps(buffer), "shooter")
-
+        socket.send(entry["Name"].encode(), "name")
+        socket.send(pickle.dumps(buffer), "shooter")
 
     log.drop([index[0]], inplace=True)
     log.reset_index(inplace=True, drop=True)
@@ -168,50 +179,60 @@ def delete_item(_, latest: bool = False):
 
     w.Listbox1.delete(index)
 
-    buffer = StringIO() # Behaves as a txt file but in memory
+    buffer = StringIO()  # Behaves as a txt file but in memory
     log.to_csv(buffer)
-    socket_send(pickle.dumps(buffer), "log_df")
+    socket.send(pickle.dumps(buffer), "log_df")
 
     update_radiobuttons()
 
+
 def add_item(point, clock=None):
+    """If no name is selected in combobox; send
+     - new hit
+     - updated log.
+
+    If name was selected; update csv and DataFrame send following to receiver
+     - shooter name
+     - shooter DataFrame
+     - new hit
+     - updated log"""
+
     name = w.TCombobox1.get()
 
-    if name == '':
+    if name == "":
         column = None
-        if clock == None:
+        if clock is None:
             string = " " + str(point)
         else:
             string = " {} kl {}".format(str(point), str(clock))
     else:
-        filename = os.path.join(prog_location, "csv", str(name)+".csv")
-        df = pd.read_csv(filename, squeeze=True, dtype='str')
+        filename = os.path.join(PROG_LOCATION, "csv", str(name) + ".csv")
+        df = pd.read_csv(filename, squeeze=True, dtype="str")
 
-        column = ['St', 'J', 'L', 'D'][selectedButton.get()-1]
+        column = ["St", "J", "L", "D"][selectedButton.get() - 1]
         row = pd.isnull(df[column]).values.nonzero()[0][0]
         print(row)
 
         df.at[row, column] = point
         df.to_csv(filename, index=False)
 
-        if not df[column].isnull().values.any(): # If column is full
-            w.Entry_Point.unbind('<Key-Return>') # Fixes anoyying bug circumventing disabled entry
-            w.Entry_Point.unbind('<KP_Enter>') # Fixes anoyying bug circumventing disabled entry
-            
-            w.Entry_Point.delete(0, 'end') # Clears entry
-            w.Entry_Clock.delete(0, 'end') # Clears entry
+        if not df[column].isnull().values.any():  # If column is full
+            w.Entry_Point.unbind("<Key-Return>")  # Fixes anoyying bug circumventing disabled entry
+            w.Entry_Point.unbind("<KP_Enter>")  # Fixes anoyying bug circumventing disabled entry
+
+            w.Entry_Point.delete(0, "end")  # Clears entry
+            w.Entry_Clock.delete(0, "end")  # Clears entry
             update_radiobuttons()
-            
-        if clock == None:
+
+        if clock is None:
             string = " {}: [{}] {}".format(name.split()[0], column, str(point))
         else:
             string = " {}: [{}] {} kl {}".format(name.split()[0], column, str(point), str(clock))
 
-        buffer = StringIO() # Behaves as a txt file but in memory
+        buffer = StringIO()  # Behaves as a txt file but in memory
         df.to_csv(buffer)
-        socket_send(name.encode(), "name")
-        socket_send(pickle.dumps(buffer), "shooter")
-
+        socket.send(name.encode(), "name")
+        socket.send(pickle.dumps(buffer), "shooter")
 
     global log
     log.loc[-1] = [name, column, point, clock]
@@ -223,10 +244,11 @@ def add_item(point, clock=None):
     w.Listbox1.insert(0, string)
     w.Listbox1.see(0)
 
-    buffer = StringIO() # Behaves as a txt file but in memory
+    buffer = StringIO()  # Behaves as a txt file but in memory
     log.to_csv(buffer)
-    socket_send(pickle.dumps(buffer), "log_df")
-    socket_send(pickle.dumps((point, clock)), "new_hit")
+    socket.send(pickle.dumps(buffer), "log_df")
+    socket.send(pickle.dumps((point, clock)), "new_hit")
+
 
 def _from_combobox(_):
     w.Label_name.focus()
@@ -238,39 +260,43 @@ def _from_combobox(_):
 
     update_radiobuttons()
 
+
 def update_radiobuttons():
     name = w.TCombobox1.get()
-    columns=['St', 'J', 'L', 'D']
+    columns = ["St", "J", "L", "D"]
 
     for column in columns:
-        radios[column].configure(state='disabled')
+        radios[column].configure(state="disabled")
     selectedButton.set(0)
 
-    if name != '':
-        filename = os.path.join(prog_location, "csv", str(name)+".csv")
-        
+    if name != "":
+        filename = os.path.join(PROG_LOCATION, "csv", str(name) + ".csv")
+
         if not os.path.exists(filename):
-            with open(filename, 'w'): pass
+            with open(filename, "w"):  # Make file
+                pass
             df = pd.DataFrame(np.nan, index=[0, 1, 2, 3], columns=columns)
             df.to_csv(filename, index=False)
             for column in columns:
-                radios[column].configure(state='normal')
+                radios[column].configure(state="normal")
         else:
             from_csv = pd.read_csv(filename, squeeze=True)
 
             for column in columns:
                 if from_csv[column].isnull().values.any():
-                    radios[column].configure(state='normal')
-            
+                    radios[column].configure(state="normal")
+
             if selectedButton.get() == 0:
-                w.Entry_Point.configure(state='disabled')
-                w.Entry_Clock.configure(state='disabled')
+                w.Entry_Point.configure(state="disabled")
+                w.Entry_Clock.configure(state="disabled")
+
 
 def allow_entry():
-    w.Entry_Point.configure(state='normal')
-    w.Entry_Point.bind('<Key-Return>', point_entry)
-    w.Entry_Point.bind('<KP_Enter>', point_entry)
+    w.Entry_Point.configure(state="normal")
+    w.Entry_Point.bind("<Key-Return>", point_entry)
+    w.Entry_Point.bind("<KP_Enter>", point_entry)
     w.Entry_Point.focus()
+
 
 def clock_entry(_):
     w.Label_ClockError.grid_remove()
@@ -278,69 +304,66 @@ def clock_entry(_):
     point = w.Entry_Point.get()
     clock = w.Entry_Clock.get()
 
-    if point_entry(_, update=False) and clock in ['12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2','1']:
+    if point_entry(_, update=False) and clock in ["12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]:
         add_item(point, clock)
         update_img(point, int(clock))
-        w.Entry_Point.delete(0, 'end')
-        w.Entry_Clock.delete(0, 'end')
+        w.Entry_Point.delete(0, "end")
+        w.Entry_Clock.delete(0, "end")
         w.Entry_Point.focus()
-        w.Entry_Clock.configure(state='disabled')
+        w.Entry_Clock.configure(state="disabled")
     else:
-        w.Entry_Clock.delete(0, 'end')
-        root.after(100) # Cause a delay for error label to flash for feedback
+        w.Entry_Clock.delete(0, "end")
+        root.after(100)  # Cause a delay for error label to flash for feedback
         w.Label_ClockError.grid()
 
+
 def point_entry(_, update: bool = True):
+    """Returns True if entry was an accepted value.
+
+    @param update: If True; updates image"""
     w.Label_PointError.grid_remove()
     root.update_idletasks()
     point = w.Entry_Point.get()
 
     # Convert elements to str to compare to "point"
-    str_pointRange = []
-    for item in target.pointRange: 
-        str_pointRange.append(str(item))
+    str_pointRange = [str(i) for i in target.pointRange]
 
-    if point in str_pointRange[1:]: # All but center
+    if point in str_pointRange[1:]:  # All but center
         if update:
             update_img(point)
-        w.Entry_Clock.configure(state='normal')
+        w.Entry_Clock.configure(state="normal")
         w.Entry_Clock.focus()
-    
-    elif point == str_pointRange[0]: # Center/bullseye
+
+    elif point == str_pointRange[0]:  # Center/bullseye
         add_item(point)
         update_img(point)
-        w.Entry_Point.delete(0, 'end')
+        w.Entry_Point.delete(0, "end")
 
     elif point in ["Miss", "x", "X"]:
         add_item(point)
         update_img(point)
-        w.Entry_Point.delete(0, 'end')
+        w.Entry_Point.delete(0, "end")
 
-    elif point in ["T", "t", "o", "O", 0, "0"]: # Hit on figure but ouside target area
+    elif point in ["T", "t", "o", "O", 0, "0"]:  # Hit on figure but ouside target area
         if update:
             update_img(point)
-        w.Entry_Clock.configure(state='normal')
-        w.Entry_Clock.focus()        
-        
+        w.Entry_Clock.configure(state="normal")
+        w.Entry_Clock.focus()
+
     else:
-        w.Entry_Point.delete(0, 'end')
-        root.after(100) # Cause a delay for error label to flash for feedback
+        w.Entry_Point.delete(0, "end")
+        root.after(100)  # Cause a delay for error label to flash for feedback
         w.Label_PointError.grid()
-        w.Entry_Clock.configure(state='disabled')
+        w.Entry_Clock.configure(state="disabled")
         return False
     return True
 
-def update_img(point, clock=None, defaultImg: bool = False):
-    global photo_location
-    if defaultImg:
-        photo_location = os.path.join(prog_location, "images", './default.png')
-        if not os.path.exists(photo_location):
-            target.default()    #! After this 'photo_location' will exist
 
-    elif clock is None:
-        photo_location = os.path.join(prog_location, "images", f'./{point}.png')
+def update_img(point, clock=None):
+    if clock is None:
+        photo_location = os.path.join(PROG_LOCATION, "images", f"./{point}.png")
     else:
-        photo_location = os.path.join(prog_location, "images", f'./{point}_{clock}.png')
+        photo_location = os.path.join(PROG_LOCATION, "images", f"./{point}_{clock}.png")
 
     if not os.path.exists(photo_location):
         print("Creating new photo")
@@ -354,146 +377,54 @@ def update_img(point, clock=None, defaultImg: bool = False):
 
     w.Image.configure(image=_img0)
 
+
+def update_img_default():
+    photo_location = os.path.join(PROG_LOCATION, "images", "./default.png")
+    if not os.path.exists(photo_location):
+        target.default()  # ! After this 'photo_location' will exist
+
+    global _img0
+    _img0 = tk.PhotoImage(file=photo_location)
+
+    w.Image.configure(image=_img0)
+
+
 def free_mode():
-    print('sender_support.free_mode', flush=True)
+    print("sender_support.free_mode", flush=True)
     if free_mode_check.get() is True:
-        w.TCombobox1.set('')
-        w.TCombobox1.configure(state='disabled')
+        w.TCombobox1.set("")
+        w.TCombobox1.configure(state="disabled")
         w.Combobox_tooltip.disable()
         allow_entry()
     else:
-        w.TCombobox1.configure(state='readonly')
-        w.Entry_Point.configure(state='disabled')
-        w.Entry_Clock.configure(state='disabled')
-        w.Entry_Point.unbind('<Key-Return>') # Fixes anoyying bug circumventing disabled entry
-        w.Entry_Point.unbind('<KP_Enter>') # Fixes anoyying bug circumventing disabled entry
+        w.TCombobox1.configure(state="readonly")
+        w.Entry_Point.configure(state="disabled")
+        w.Entry_Clock.configure(state="disabled")
+        w.Entry_Point.unbind("<Key-Return>")  # Fixes anoyying bug circumventing disabled entry
+        w.Entry_Point.unbind("<KP_Enter>")  # Fixes anoyying bug circumventing disabled entry
     update_radiobuttons()
 
 
-"""
-    Begining of socket functions
-"""
+def act_on_msg():
+    while socket.msg_list:
+        encoded_data, data_info = socket.msg_list.pop(0)
 
-def socket_listen():
-    print("Starting socket_listen")
-    if ping_timer is not None:
-        print(f'Canceling {ping_timer}')
-        root.after_cancel(ping_timer)
-        
-    global conn, addr        
-    if conn is not None:
-        print(f'Previously connected to {conn}')
-        readable, writeable, e = select.select([conn], [conn], [conn], 0.2)
-        if readable:
-            print("This was readable!")
-        if writeable:
-            print("This was writeable!")
-        if e:
-            print("This was e!")
-        if writeable and (not readable):
-            print("Should skip this as it is alreday connected!")
-            return
+        if data_info == "ping":  # ! Ping reaction not implemented
+            pass
+        # global ping_timer
+        # if ping_timer is not None:
+        #     print(f'Canceling {ping_timer}')
+        #     root.after_cancel(ping_timer)
+        # ping_timer = root.after(15000, socket.listen)
+        # print(f'Scheduling {ping_timer}')
 
-    s.listen(1)
-    s.setblocking(False)
-    print("Socket awaitning connection")
-    i=0
-    windows.open_network_popup()
-    while True:
-        try:
-            (conn, addr) = s.accept()
-            break
-        except BlockingIOError:
-            i += 1
-            print('/-\|'[i%4]+'\r',end='',flush=True)
-    print("Connected")
-    windows.close_network_popup()
-    global recive_timer
-    if recive_timer is not None:
-        root.after_cancel(recive_timer)
-    recive_timer = root.after(2000, socket_recive)
-
-def socket_send(data: bytes, data_info: str):
-    data_info = data_info.lower()
-    if len(str(data_info)) > 8:
-        raise ValueError("Data_info has to be max 8 characters, was: " + str(len(data_info)))
-    data_info = f'{data_info: <8}'
-
-    size = len(data) + len(data_info) + 2   # 2 is for "packet_len"
-    FULL_BYTE = int(0xFF)
-    packet_len = bytes([size//FULL_BYTE, size % FULL_BYTE]) # Returns two bytes to store the packet size excluding bytes for TCP protocoll
-    prefix = packet_len + data_info.encode()
-    print(len(prefix + data))
-    try:
-        conn.sendall(prefix + data)
-    except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
-        print(e)
-        print("From socket_send")
-        socket_listen()
-        socket_send(data, data_info)
-
-def socket_recive():
-    # print("Reciving")
-    FULL_BYTE = int(0xFF)
-    msg = b''
-    msg_list = []
-    length = 0
-    has_read = False
-    while True:
-        r,w,e = select.select([conn], [], [], 0.2)
-        if r:
-            try:
-                msg += conn.recv(2048)
-                has_read = True
-            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
-                print(e)
-                print("From socket_recive")
-                socket_listen()
-                
-        if len(msg) >= 2:
-
-            if length == 0:
-                length = int(msg[0])*FULL_BYTE + int(msg[1]) # Convert first 2 bytes to decimal
-                print(length)
-
-            if len(msg) >= length and length:
-                data_info = msg[2:10]
-                data = msg[10:length]
-                msg_list.append((data, data_info.decode().strip()))
-                msg = msg[length:]
-                length = 0
-
-        if not len(msg):
-            global recive_timer
-            recive_timer = root.after(500, socket_recive)
-            if has_read:
-                act_on_msg(msg_list)
-            # return msg_list
-            return
-
-"""
-    End of socket functions
-"""
-
-def act_on_msg(msg_list: list):
-    while msg_list:
-        encoded_data, data_info = msg_list.pop(0)
-        
-        if data_info == "ping":
-            global ping_timer
-            if ping_timer is not None:
-                print(f'Canceling {ping_timer}')
-                root.after_cancel(ping_timer)
-            ping_timer = root.after(15000, socket_listen)
-            print(f'Scheduling {ping_timer}')
-
-        elif data_info == "name":
+        elif data_info == "shooter":
             shooter_name = encoded_data.decode()
             user_name = shooter_name
-            i=1
+            i = 1
             while user_name in users:
-                user_name = f'{shooter_name} ({i})'
-                i+=1
+                user_name = f"{shooter_name} ({i})"
+                i += 1
             users.insert(0, user_name)
 
             w.TCombobox1.configure(values=users)
@@ -512,6 +443,9 @@ def act_on_msg(msg_list: list):
         elif data_info == "date":
             print("Current date is " + encoded_data.decode())
 
+        elif data_info == "time":
+            print("Current time is " + encoded_data.decode())
+
         else:
             print("Unrecognizeable info: " + data_info)
             print("Was carrying this data: " + str(encoded_data))
@@ -523,6 +457,8 @@ def destroy_window():
     top_level.destroy()
     top_level = None
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sender
+
     sender.vp_start_gui()
