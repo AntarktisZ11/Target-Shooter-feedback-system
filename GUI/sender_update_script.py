@@ -11,6 +11,8 @@ filenames = [
     "figureGen.py",
     "pdflatex.py",
     "template.tex",
+    "socket_stuff/BaseSocket.py",
+    "socket_stuff/SenderSocket.py",
 ]
 
 Updater(filenames).run()

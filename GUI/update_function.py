@@ -36,20 +36,20 @@ class File:
     """Class for handeling information of file content"""
 
     cached_text: bytes
-    filename: str
+    filepath: str
     file_location: str
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filepath: str) -> None:
         """Class for handeling information of file content
 
         Args:
-            filename (str): Filename/path to file
+            filepath (str): Filepath to file from GUI folder
         """
-        self.filename = filename
-        self.file_location = os.path.join(LOCAL_PROJECT_FOLDER, filename)
+        self.filepath = filepath
+        self.file_location = os.path.join(LOCAL_PROJECT_FOLDER, filepath)
 
     def cache_online_text(self):
-        """Find text of filename from github repository
+        """Find text of filepath from github repository
 
         Raises:
             ConnectionError: Raised when request to url fails
@@ -57,13 +57,12 @@ class File:
         Returns:
             Bool: Returns True successfull
         """
-        url = BASE_URL + self.filename
+        url = BASE_URL + self.filepath
         try:
             text = b""
             for line in urllib.request.urlopen(url):
                 text += line
             self.cached_text = text
-            # self.cached_text = ''.join(line for line in urllib.request.urlopen(url))
         except urllib.error.HTTPError:
             print(f"URL could not be found: {url}")
             return False
@@ -79,18 +78,22 @@ class File:
             Bool: Returns True if file was different or new
         """
         if not os.path.isfile(self.file_location):
-            print(f"{self.filename} was new!")
+            print(f"{self.filepath} was new!")
             return True
 
         with open(self.file_location, "rb") as file:
             if file.read() != self.cached_text:
-                print(f"{self.filename} was modified!")
+                print(f"{self.filepath} was modified!")
                 return True
 
         return False
 
     def update_file(self):
         """Write cached content to file"""
+        dir, _ = os.path.split(self.file_location)
+
+        os.makedirs(dir, exist_ok=True)
+
         with open(self.file_location, "wb") as file:
             file.write(self.cached_text)
 
@@ -103,7 +106,7 @@ class Updater:
         Args:
             files_to_update (List[str]): Files to find in repository and update or create locally
         """
-        self.files = [File(filename) for filename in files_to_update]
+        self.files = [File(filepath) for filepath in files_to_update]
 
     def run(self):
         """Run through all files checking if they need to be updated"""

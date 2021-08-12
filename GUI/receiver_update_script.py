@@ -9,6 +9,8 @@ filenames = [
     "receiver.py",
     "receiver_support.py",
     "figureGen.py",
+    "socket_stuff/BaseSocket.py",
+    "socket_stuff/ReceiverSocket.py",
 ]
 
 Updater(filenames).run()
