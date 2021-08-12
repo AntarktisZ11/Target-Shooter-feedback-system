@@ -24,8 +24,7 @@ REPO_PARENT = "Target-Shooter-feedback-system/master/GUI"
 BASE_URL = f"{SITE}/{GITHUB_USER}/{REPO_PARENT}/"
 
 if sys.platform == "linux":
-    prog_call = sys.argv[0]
-    LOCAL_PROJECT_FOLDER = os.path.split(prog_call)[0]
+    LOCAL_PROJECT_FOLDER = os.path.split(__file__)[0]
 else:
     LOCAL_PROJECT_FOLDER = (
         r"C:/Users/Marcus Börne/Desktop/Python Projects/L-O/Target-Shooter-feedback-system/GUI/temp2/"
@@ -90,8 +89,11 @@ class File:
 
     def update_file(self):
         """Write cached content to file"""
-        dir, _ = os.path.split(self.file_location)
+        if len(self.cached_text) == 0:
+            raise ValueError("There is no cached content to write to file")
 
+        # Create subdirectory if needed
+        dir, _ = os.path.split(self.file_location)
         os.makedirs(dir, exist_ok=True)
 
         with open(self.file_location, "wb") as file:
