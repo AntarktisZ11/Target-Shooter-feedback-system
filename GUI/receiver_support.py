@@ -48,23 +48,6 @@ def init(top: tk.Tk, gui, *args, **kwargs):
     root.bind("<Tab>", lambda e: open_input(InputType.SHOOTER_NAME))
     root.bind("<Tab>", lambda e: print("Tab"), add=True)
     root.bind("<FocusOut>", lambda e: prevent_focus_out())
-    # global popup_open
-    # popup_open = False
-
-    global HOST, PORT
-    HOST = "192.168.1.90"
-    PORT = 12345
-
-    # global recive_timer, ping_timer
-    # recive_timer, ping_timer = None, None
-
-    # global msg_list
-    # msg_list = []
-
-    # global leader_name
-    # leader_name = None
-
-    # root.after(2000, socket_connect)
 
     global socket
     socket = ReceiverSocket.ReceiverSocket(root, act_on_msg)
@@ -124,118 +107,6 @@ def update_img_default():
     _img0 = tk.PhotoImage(file=photo_location)
 
     w.Image.configure(image=_img0)
-
-    """
-        -------  Socket functions  ---------
-    """
-
-
-# def socket_connect():
-#     global ping_timer
-#     if ping_timer is not None:
-#         root.after_cancel(ping_timer)
-
-#     global s
-#     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     open_popup()
-#     while True:
-#         try:
-#             s.connect((HOST, PORT))
-#             s.setblocking(0)
-#             break
-#         except (TimeoutError, ConnectionRefusedError, OSError) as e:
-#             print(e)
-#             if str(e) == "[Errno 106] Transport endpoint is already connected":
-#                 break
-#             print("Waiting to connect!")
-#             root.after(200)
-#             # root.update() # ! Allows accedental opening of input popup
-#     print("Connected")
-#     close_popup()
-#     if leader_name is None:
-#         root.after(300, open_input, InputType.LEADER_NAME)    # ! Don't forget to enable for print out
-#     else:
-#         socket_send(leader_name.encode(), 'leader')
-#     root.after(500)
-
-#     global recive_timer
-#     if recive_timer is not None:
-#         root.after_cancel(recive_timer)
-
-#     recive_timer = root.after(2000, socket_recive)
-#     ping_timer = root.after(5000, ping)
-
-
-# def socket_send(data: bytes, data_info: str):
-#     data_info = data_info.lower()
-#     if len(str(data_info)) > 8:
-#         raise ValueError("Data_info has to be max 8 characters, was: " + str(len(data_info)))
-#     data_info = f'{data_info: <8}'
-
-#     size = len(data) + len(data_info) + 2   # 2 is for "packet_len"
-#     FULL_BYTE = int(0xFF)
-#     packet_len = bytes([size//FULL_BYTE, size % FULL_BYTE]) # Returns two bytes to store the packet size excluding size of TCP protocoll
-#     prefix = packet_len + data_info.encode()
-#     print(len(prefix + data))
-#     try:
-#         s.sendall(prefix + data)
-#     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
-#         print(e)
-#         if not is_popup_open():
-#             socket_connect()
-#         socket_send(data, data_info)
-
-
-# def socket_recive():
-#     # print("Reciveing")
-#     FULL_BYTE = int(0xFF)
-#     msg = b''
-#     list = []
-#     length = 0
-#     has_read = False
-#     while True:
-#         r,w,e = select.select([s], [], [], 0.2)
-#         if r:
-#             try:
-#                 msg += s.recv(2048)
-#                 has_read = True
-#             except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError, OSError) as e:
-#                 print(e)
-#                 if not is_popup_open():
-#                     socket_connect()
-
-#         if len(msg) >= 2:
-
-#             if length == 0:
-#                 length = int(msg[0])*FULL_BYTE + int(msg[1]) # Convert first 2 bytes to decimal
-#                 print(length)
-
-#             if len(msg) >= length and length:
-#                 data_info = msg[2:10]
-#                 data = msg[10:length]
-#                 list.append((data, data_info.decode().strip()))
-#                 msg = msg[length:]
-#                 length = 0
-
-#         if not len(msg):
-#             global recive_timer
-#             recive_timer = root.after(500, socket_recive)
-#             if has_read:
-#                 # act_on_msg(list)
-#                 global msg_list
-#                 msg_list.extend(list)
-#                 root.after(0, act_on_msg)
-#             return
-
-# def ping():
-#     socket_send(b'', "ping")
-#     global ping_timer
-#     ping_timer = root.after(5000, ping)
-
-
-#     """
-#         -------  End of socket functions  ---------
-#     """
 
 
 def act_on_msg():
@@ -333,17 +204,11 @@ class NetworkPopup(tk.Toplevel):
 
 
 def open_popup():
-    # global popup_open
-    # popup_open = True
-
     root.popup = NetworkPopup(root)
     root.update_idletasks()
 
 
 def close_popup():
-    # global popup_open
-    # popup_open = False
-
     root.popup.destroy()
 
 
