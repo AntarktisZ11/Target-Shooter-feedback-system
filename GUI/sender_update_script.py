@@ -8,6 +8,7 @@ filenames = [
     "sender_update_script.py",  # Must always exist
     "sender.py",
     "sender_support.py",
+    "sender_extra_windows.py",
     "figureGen.py",
     "pdflatex.py",
     "template.tex",
