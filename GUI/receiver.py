@@ -8,71 +8,79 @@
 import sys
 
 import tkinter as tk
-import tkinter.ttk as ttk
-import tkinter.font as Tkfont
+
+# import tkinter.ttk as ttk
+# import tkinter.font as Tkfont
 
 import receiver_support
 import os.path
 
+
 def vp_start_gui():
-    '''Starting point when module is the main routine.'''
+    """Starting point when module is the main routine."""
     global val, w, root
     global prog_location
     prog_call = sys.argv[0]
     prog_location = os.path.split(prog_call)[0]
     root = tk.Tk()
-    top = Toplevel1 (root)
+    top = Toplevel1(root)
     receiver_support.init(root, top)
     root.mainloop()
 
+
 w = None
+
+
 def create_Toplevel1(rt, *args, **kwargs):
-    '''Starting point when module is imported by another module.
-       Correct form of call: 'create_Toplevel1(root, *args, **kwargs)' .'''
+    """Starting point when module is imported by another module.
+    Correct form of call: 'create_Toplevel1(root, *args, **kwargs)' ."""
     global w, w_win, root
-    #rt = root
+    # rt = root
     root = rt
-    w = tk.Toplevel (root)
-    top = Toplevel1 (w)
+    w = tk.Toplevel(root)
+    top = Toplevel1(w)
     receiver_support.init(w, top, *args, **kwargs)
     return (w, top)
+
 
 def destroy_Toplevel1():
     global w
     w.destroy()
     w = None
 
+
 class Toplevel1:
     def __init__(self, top=None):
-        '''This class configures and populates the toplevel window.
-           top is the toplevel containing window.'''
-        _bgcolor = '#d9d9d9'  # X11 color: 'gray85'
-        _fgcolor = '#000000'  # X11 color: 'black'
-        _compcolor = '#d9d9d9' # X11 color: 'gray85'
-        _ana1color = '#d9d9d9' # X11 color: 'gray85'
-        _ana2color = '#ececec' # Closest X11 color: 'gray92'
+        """This class configures and populates the toplevel window.
+        top is the toplevel containing window."""
+        _bgcolor = "#d9d9d9"  # X11 color: 'gray85'
+        _fgcolor = "#000000"  # X11 color: 'black'
+        # _compcolor = "#d9d9d9"  # X11 color: 'gray85'
+        # _ana1color = "#d9d9d9"  # X11 color: 'gray85'
+        # _ana2color = "#ececec"  # Closest X11 color: 'gray92'
+        _disabledfgcolor = "#a3a3a3"
+        _activebgcolor = "#f9f9f9"
         # default_font = Tkfont.nametofont("TkDefaultFont")
         # default_font.configure(size=11)
 
-
-        top.geometry("1308x878+306+92")
+        top.geometry("1308x878")
         top.minsize(120, 1)
         top.maxsize(1920, 1080)
-        top.resizable(True,  True)
+        top.resizable(True, True)
         if sys.platform == "linux":
             top.attributes("-fullscreen", True)
         # top.attributes("-fullscreen", True)
         top.title("Träff display")
-        top.configure(background="#d9d9d9")
-        top.configure(highlightbackground="#d9d9d9")
-        top.configure(highlightcolor="black")
+        top.configure(
+            background=_bgcolor,
+            highlightbackground=_bgcolor,
+            highlightcolor="black",
+        )
 
         top.grid_columnconfigure(0, weight=1)
         top.grid_columnconfigure(1, weight=4)
         top.grid_rowconfigure(0, weight=1)
         top.grid_rowconfigure(1, weight=1)
-
-
 
         """
             -------  Image  ---------
@@ -82,22 +90,21 @@ class Toplevel1:
         self.Frame_Image.grid(row=0, rowspan=2, column=1, sticky="NSEW")
         self.Frame_Image.grid_columnconfigure(0, weight=1)
         self.Frame_Image.configure(
-            relief='groove',
+            relief="groove",
             borderwidth="2",
-            # background="#d9d9d9",
+            # background=_bgcolor,
             background="white",
             # background="pink",
-            highlightbackground="#d9d9d9",
-            highlightcolor="black"
+            highlightbackground=_bgcolor,
+            highlightcolor="black",
         )
 
         self.Image = tk.Label(self.Frame_Image)
-        self.Image.place(relx=.5, rely=.5, anchor='c')
+        self.Image.place(relx=0.5, rely=0.5, anchor="c")
         self.Image.configure(
-            text='''Bild''',
-            background="white"
+            text="""Bild""",
+            background="white",
         )
-
 
         """
             -------  Shooter labels  ---------
@@ -106,63 +113,60 @@ class Toplevel1:
         self.Frame_labels = tk.Frame(top, height=100, width=200)
         self.Frame_labels.grid(row=0, column=0, sticky="NSEW")
         self.Frame_labels.configure(
-            relief='groove',
+            relief="groove",
             borderwidth="2",
-            background="#d9d9d9",
-            highlightbackground="#d9d9d9",
-            highlightcolor="black"
+            background=_bgcolor,
+            highlightbackground=_bgcolor,
+            highlightcolor="black",
         )
 
         MAX_ROWS = 6
         MAX_COLUMNS = 4
         self.container_frame = tk.Frame(self.Frame_labels, height=400, width=200)
-        self.container_frame.place(relx=.5, rely=.4, anchor='c')
+        self.container_frame.place(relx=0.5, rely=0.4, anchor="c")
         for i in range(MAX_ROWS):
             self.container_frame.grid_rowconfigure(i, weight=1)
-
 
         self.Label_Shooter_Name = tk.Label(self.container_frame)
         self.Label_Shooter_Name.grid(row=0, columnspan=MAX_COLUMNS, sticky="NWSE")
         self.Label_Shooter_Name.configure(
-            activebackground="#f9f9f9",
+            activebackground=_activebgcolor,
             activeforeground="black",
-            background="#d9d9d9",
-            disabledforeground="#a3a3a3",
-            foreground="#000000",
-            highlightbackground="#d9d9d9",
+            background=_bgcolor,
+            disabledforeground=_disabledfgcolor,
+            foreground=_fgcolor,
+            highlightbackground=_bgcolor,
             highlightcolor="black",
-            text='''Shooter Name''',
-            font=("Segoe UI", 15, "bold")
+            text="""Shooter Name""",
+            font=("Segoe UI", 15, "bold"),
         )
 
-
         self.shooter_labels = []
-        for n in range( (MAX_ROWS-1) * MAX_COLUMNS):
+        for n in range((MAX_ROWS - 1) * MAX_COLUMNS):
             self.shooter_labels.append(tk.Label(self.container_frame))
             row = (n // MAX_COLUMNS) + 1
             col = n % MAX_COLUMNS
             self.shooter_labels[n].grid(row=row, column=col, sticky="NWSE")
             self.shooter_labels[n].configure(
-                activebackground="#f9f9f9",
+                activebackground=_activebgcolor,
                 activeforeground="black",
-                background="#d9d9d9",
-                disabledforeground="#a3a3a3",
-                foreground="#000000",
-                highlightbackground="#d9d9d9",
+                background=_bgcolor,
+                disabledforeground=_disabledfgcolor,
+                foreground=_fgcolor,
+                highlightbackground=_bgcolor,
                 highlightcolor="black",
-                text=f' {row},{col} ',
-                font=("Segoe UI", 15, "bold")
-            )       
-    
+                text=f" {row},{col} ",
+                font=("Segoe UI", 15, "bold"),
+            )
+
         self.help_label = tk.Label(self.Frame_labels)
         self.help_label.configure(
-            activeforeground="#a3a3a3",
-            background="#d9d9d9",
+            activeforeground=_disabledfgcolor,
+            background=_bgcolor,
             text="Tryck <Tab> för ny skytt",
-            font=("Segoe UI", 12)
+            font=("Segoe UI", 12),
         )
-        self.help_label.place(relx=.5, rely=1, anchor='s')
-
+        self.help_label.place(relx=0.5, rely=1, anchor="s")
 
         """
             -------  Log  ---------
@@ -175,33 +179,23 @@ class Toplevel1:
         self.Frame_log.grid_columnconfigure(1, weight=2)
         self.Frame_log.grid_columnconfigure(2, weight=1)
         self.Frame_log.configure(
-            relief='groove',
-            borderwidth="2",
-            background="#d9d9d9",
-            highlightbackground="#d9d9d9",
-            highlightcolor="black"
+            relief="groove", borderwidth="2", background=_bgcolor, highlightbackground=_bgcolor, highlightcolor="black"
         )
-
 
         self.Listbox1 = tk.Listbox(self.Frame_log)
         self.Listbox1.grid(column=1, sticky="NSEW")
         self.Listbox1.configure(
             background="white",
-            disabledforeground="#a3a3a3",
-            foreground="#000000",
-            highlightbackground="#d9d9d9",
+            disabledforeground=_disabledfgcolor,
+            foreground=_fgcolor,
+            highlightbackground=_bgcolor,
             highlightcolor="black",
             selectbackground="blue",
             selectforeground="white",
             font=("Segoe UI", 16),
-            takefocus="0"
+            takefocus="0",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     vp_start_gui()
-
-
-
-
-

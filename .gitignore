@@ -16,3 +16,5 @@ testing3.py
 AnotherThreadingTest.py
 test_threading.py
 GUI/Testing/*
+GUI/temp/*
+GUI/temp2/*
