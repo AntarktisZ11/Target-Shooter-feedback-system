@@ -476,7 +476,7 @@ Kommer rensa skytte-data!\
         self.button_cancel = tk.Button(self, text="Avbryt", command=close_exit_popup)
         self.button_cancel.place(relx=0.7, rely=0.85, anchor="c")
 
-    def clear_folder(foldername):
+    def clear_folder(self, foldername):
         folder = os.path.join(prog_location, foldername)
         try:
             shutil.rmtree(folder)
