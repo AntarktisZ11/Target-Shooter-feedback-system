@@ -107,7 +107,7 @@ class File:
 
 class Updater:
 
-    changed_files: List[File.filepath]
+    changed_files: List[str]
     update_files = ["update_function.py", "receiver_update_script.py", "sender_update_script.py"]
 
     def __init__(self, files_to_update: List[str]) -> None:
