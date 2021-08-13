@@ -102,6 +102,8 @@ class File:
 
 
 class Updater:
+    update_files = ["update_function.py", "receiver_update_script.py", "sender_update_script.py"]
+
     def __init__(self, files_to_update: List[str]) -> None:
         """Interface from which you update the given files from github repository
         https://github.com/AntarktisZ11/Target-Shooter-feedback-system/tree/master/GUI
@@ -111,15 +113,24 @@ class Updater:
         """
         self.files = [File(filepath) for filepath in files_to_update]
 
-    def run(self):
-        """Run through all files checking if they need to be updated"""
+    def run(self, reboot: bool = True):
+        """Run through all files checking if they need to be updated
+
+        Args:
+            reboot (bool, optional): Reboots if any update file has been changed. Defaults to True.
+        """
         files = [f for f in self.files if f.cache_online_text()]
 
+        changed_files = []
         for f in files:
             if f.content_differs():
                 f.update_file()
+                changed_files.append(f)
 
         print("Update completed")
+
+        if reboot and [f for f in changed_files if f in self.update_files]:
+            os.system("sudo reboot")
 
     @staticmethod
     def connected(max_retries: int = 20, timeout: float = 1):
