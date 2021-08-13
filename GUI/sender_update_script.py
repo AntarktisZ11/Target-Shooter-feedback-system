@@ -16,7 +16,10 @@ filenames = [
     "socket_stuff/SenderSocket.py",
 ]
 
+print("Pre-check")
 if Updater.connected():
+    print("Pre-run")
     Updater(filenames).run()
 else:
     raise ConnectionError("Network connection bad or non-existent")
+print("Exiting")

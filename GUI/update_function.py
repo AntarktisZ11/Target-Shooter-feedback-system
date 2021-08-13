@@ -119,6 +119,8 @@ class Updater:
             if f.content_differs():
                 f.update_file()
 
+        print("Update completed")
+
     @staticmethod
     def connected(max_retries: int = 20, timeout: float = 1):
         """Check if internet is connected and retry with set interval until it is
@@ -147,7 +149,10 @@ if __name__ == "__main__":
     filenames = ["receiver.py", "receiver_support.py", "figureGen.py", "update_function.py", ""]
     filenames.append("receiver_update_script.py")  # Must always exist
 
+    print("Pre-check")
     if Updater.connected():
+        print("Pre-run")
         Updater(filenames).run()
     else:
         raise ConnectionError("Network connection bad or non-existent")
+    print("Exiting")
