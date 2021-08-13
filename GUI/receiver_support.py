@@ -192,7 +192,7 @@ class NetworkPopup(tk.Toplevel):
         # self.overrideredirect(True)
         self.geometry("320x100+500+500")  # set the position and size of the popup
 
-        lbl = tk.Label(self, text="Försöker koppla til markördatorn ... ", font=("Segoe UI", 11, "bold"))
+        lbl = tk.Label(self, text="Försöker koppla till markördatorn ... ", font=("Segoe UI", 11, "bold"))
         lbl.place(relx=0.5, rely=0.5, anchor="c")
         self.title("Connecting...")
 
