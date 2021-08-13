@@ -24,7 +24,11 @@ GITHUB_USER = "AntarktisZ11"
 REPO_PARENT = "Target-Shooter-feedback-system/master/GUI"
 BASE_URL = f"{SITE}/{GITHUB_USER}/{REPO_PARENT}/"
 
+linux = False
 if sys.platform == "linux":
+    linux = True
+
+if linux:
     LOCAL_PROJECT_FOLDER = os.path.split(__file__)[0]
 else:
     LOCAL_PROJECT_FOLDER = (
@@ -117,7 +121,7 @@ class Updater:
         """Run through all files checking if they need to be updated
 
         Args:
-            reboot (bool, optional): Reboots if any update file has been changed. Defaults to True.
+            reboot (bool, optional): Reboots if any update file has been changed. ONLY LINUX!!! Defaults to True.
         """
         files = [f for f in self.files if f.cache_online_text()]
 
@@ -130,7 +134,8 @@ class Updater:
         print("Update completed")
 
         if reboot and [f for f in changed_files if f in self.update_files]:
-            os.system("sudo reboot")
+            if linux:
+                os.system("sudo reboot")
 
     @staticmethod
     def connected(max_retries: int = 20, timeout: float = 1):
