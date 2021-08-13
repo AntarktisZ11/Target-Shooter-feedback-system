@@ -106,6 +106,8 @@ class File:
 
 
 class Updater:
+
+    changed_files: List[File.filepath]
     update_files = ["update_function.py", "receiver_update_script.py", "sender_update_script.py"]
 
     def __init__(self, files_to_update: List[str]) -> None:
@@ -125,15 +127,15 @@ class Updater:
         """
         files = [f for f in self.files if f.cache_online_text()]
 
-        changed_files = []
+        self.changed_files = []
         for f in files:
             if f.content_differs():
                 f.update_file()
-                changed_files.append(f)
+                self.changed_files.append(f.filepath)
 
-        print("Update completed")
+        print(f"Update completed, {self.changed_files} files updated!")
 
-        if reboot and linux and [f for f in changed_files if f in self.update_files]:
+        if reboot and linux and [f for f in self.changed_files if f in self.update_files]:
             os.system("sudo reboot")
 
     @staticmethod
