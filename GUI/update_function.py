@@ -13,6 +13,7 @@ import os
 from typing import List
 import urllib.request  # the lib that handles the url stuff
 import urllib.error  # for error handling
+from time import sleep
 
 
 # * Is self-updating
@@ -59,7 +60,7 @@ class File:
         url = BASE_URL + self.filepath
         try:
             text = b""
-            for line in urllib.request.urlopen(url):
+            for line in urllib.request.urlopen(url, timeout=5):
                 text += line
             self.cached_text = text
         except urllib.error.HTTPError:
@@ -118,10 +119,35 @@ class Updater:
             if f.content_differs():
                 f.update_file()
 
+    @staticmethod
+    def connected(max_retries: int = 20, timeout: float = 1):
+        """Check if internet is connected and retry with set interval until it is
+
+        Args:
+            max_retries (int, optional): Times to retry establishing connection. Defaults to 20.
+            timeout (float, optional): Wait time between retries. Defaults to 1.
+
+        Returns:
+            bool: True if internet access was aquired, else False
+        """
+        retry = 0
+        while retry < max_retries:
+            try:
+                urllib.request.urlopen("https://www.google.com/")
+                return True
+            except urllib.error.URLError:
+                retry += 1
+                sleep(timeout)
+
+        return False
+
 
 if __name__ == "__main__":
     # Files which will be updated
     filenames = ["receiver.py", "receiver_support.py", "figureGen.py", "update_function.py", ""]
     filenames.append("receiver_update_script.py")  # Must always exist
 
-    Updater(filenames).run()
+    if Updater.connected():
+        Updater(filenames).run()
+    else:
+        raise ConnectionError("Network connection bad or non-existent")

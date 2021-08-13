@@ -13,4 +13,7 @@ filenames = [
     "socket_stuff/ReceiverSocket.py",
 ]
 
-Updater(filenames).run()
+if Updater.connected():
+    Updater(filenames).run()
+else:
+    raise ConnectionError("Network connection bad or non-existent")
