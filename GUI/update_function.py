@@ -133,7 +133,7 @@ class Updater:
                 f.update_file()
                 self.changed_files.append(f.filepath)
 
-        print(f"Update completed, {self.changed_files} files updated!")
+        print(f"Update completed, {len(self.changed_files)} files updated!")
 
         if reboot and linux and [f for f in self.changed_files if f in self.update_files]:
             os.system("sudo reboot")
