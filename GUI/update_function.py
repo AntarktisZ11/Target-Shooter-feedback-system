@@ -133,9 +133,8 @@ class Updater:
 
         print("Update completed")
 
-        if reboot and [f for f in changed_files if f in self.update_files]:
-            if linux:
-                os.system("sudo reboot")
+        if reboot and linux and [f for f in changed_files if f in self.update_files]:
+            os.system("sudo reboot")
 
     @staticmethod
     def connected(max_retries: int = 20, timeout: float = 1):
