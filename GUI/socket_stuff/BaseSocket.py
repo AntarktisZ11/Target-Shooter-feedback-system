@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import socket
 import select
+import sys
 
 from tkinter import Tk
 from typing import List, Tuple
@@ -13,12 +14,17 @@ FULL_BYTE = int(0xFF)
 SELECT_FUNC_TIMEOUT = 0.2  # seconds
 RECV_BUFFER_SIZE = 2048  # bytes
 
+if sys.platform == "linux":
+    HOST = "192.168.3.14"
+else:
+    HOST = "192.168.1.90"
+
 
 class BaseSocket(ABC):
 
     conn: socket.socket
     msg_list: List[Tuple[bytes, str]] = []
-    HOST = "192.168.1.90"
+    HOST = HOST
     PORT = 12345
     ping_timer, recive_timer = None, None
 
