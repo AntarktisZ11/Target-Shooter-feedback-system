@@ -36,6 +36,30 @@ else:
     )
 
 
+RECEIVER_FILES = [
+    "update_function.py",  # Must always exist
+    "receiver_update_script.py",  # Must always exist
+    "receiver.py",
+    "receiver_support.py",
+    "figureGen.py",
+    "socket_stuff/BaseSocket.py",
+    "socket_stuff/ReceiverSocket.py",
+]
+
+SENDER_FILES = [
+    "update_function.py",  # Must always exist
+    "sender_update_script.py",  # Must always exist
+    "sender.py",
+    "sender_support.py",
+    "sender_extra_windows.py",
+    "figureGen.py",
+    "pdflatex.py",
+    "template.tex",
+    "socket_stuff/BaseSocket.py",
+    "socket_stuff/SenderSocket.py",
+]
+
+
 class File:
     """Class for handeling information of file content"""
 
@@ -133,10 +157,10 @@ class Updater:
                 f.update_file()
                 self.changed_files.append(f.filepath)
 
-        print(f"Update completed, {len(self.changed_files)} files updated!")
+        print("Update completed!")
 
-        if reboot and linux and [f for f in self.changed_files if f in self.update_files]:
-            os.system("sudo reboot")
+        # if reboot and linux and [f for f in self.changed_files if f in self.update_files]:
+        #     os.system("sudo reboot")
 
     @staticmethod
     def connected(max_retries: int = 20, timeout: float = 1):
