@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+# Standard modules
 import importlib
 import os
 import sys
 from typing import List
+
+# Local files
 import update_function
 
 

@@ -10,23 +10,21 @@
 #    May 19, 2021 05:30:26 PM CEST  platform: Windows NT
 #    May 19, 2021 05:56:42 PM CEST  platform: Windows NT
 
+# Standard modules
 import sys
 import os
+import pickle
+from io import StringIO
+import tkinter as tk
 
-import figureGen  # Local file
-import sender_extra_windows as windows  # Local file
-
-# import sender
-# from sender import Toplevel1
-from socket_stuff import SenderSocket  # ! Have to try and implement to reduce single file length
-
+# Third party modules
 import pandas as pd
 import numpy as np
 
-import pickle
-from io import StringIO
-
-import tkinter as tk
+# Local files
+import figureGen
+import sender_extra_windows as windows
+from socket_stuff import SenderSocket
 
 
 def set_Tk_var():

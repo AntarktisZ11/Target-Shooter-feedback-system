@@ -5,26 +5,21 @@
 #  in conjunction with Tcl version 8.6
 #    May 20, 2021 03:37:04 AM CEST  platform: Windows NT
 
+# Standard modules
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 import sys
 import os
-
-# import receiver  # Local file
-import figureGen  # Local file
-from socket_stuff import ReceiverSocket
-
-import pandas as pd
-
-# import socket
-# import select
 import pickle
 import datetime
-
 import tkinter as tk
 
-# import tkinter.font as Tkfont
-# import tkinter.ttk as ttk
+# Third party modules
+import pandas as pd
+
+# Local files
+import figureGen  # Local file
+from socket_stuff import ReceiverSocket
 
 
 # def init(top: tk.Tk, gui: receiver.Toplevel1, *args, **kwargs): # ! Only when coding

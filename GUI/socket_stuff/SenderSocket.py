@@ -1,4 +1,7 @@
+# Standard modules
 from typing import Optional
+
+# Local files
 from .BaseSocket import BaseSocket, socket, select, Tk, SELECT_FUNC_TIMEOUT
 import sender_extra_windows as windows
 

@@ -2,8 +2,7 @@ from abc import ABC, abstractmethod
 import socket
 import select
 import sys
-
-from tkinter import Tk
+from tkinter import Tk  # For Type hint
 from typing import List, Tuple
 
 

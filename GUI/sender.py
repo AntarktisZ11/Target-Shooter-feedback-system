@@ -7,14 +7,15 @@
 
 # ! Made for python 3.7 and 3.8
 
+# Standard modules
 import sys
-
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.font as Tkfont
 
+# Local files
 import sender_support
-import sender_extra_windows as windows  # Local file
+import sender_extra_windows as windows
 
 
 def vp_start_gui():

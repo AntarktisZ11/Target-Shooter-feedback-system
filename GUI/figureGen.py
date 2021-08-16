@@ -1,7 +1,10 @@
+# Standard modules
 from typing import List, Optional
+import os
+
+# Third party modules
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 
 class Target:

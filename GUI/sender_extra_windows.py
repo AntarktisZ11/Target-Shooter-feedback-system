@@ -1,12 +1,13 @@
+# Standard modules
 import sys
 import os
 import shutil
-
-import pandas as pd
-import numpy as np
-
 import tkinter as tk
 import tkinter.ttk as ttk
+
+# Third party modules
+import pandas as pd
+import numpy as np
 
 
 def init_globals(top, gui, program_location, user_list):

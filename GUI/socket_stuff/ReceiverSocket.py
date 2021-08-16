@@ -1,8 +1,9 @@
+# Standard modules
 from typing import Optional
+
+# Local files
 from .BaseSocket import BaseSocket, socket, Tk
 import receiver_support
-
-# from receiver_support import InputType
 
 
 class ReceiverSocket(BaseSocket):

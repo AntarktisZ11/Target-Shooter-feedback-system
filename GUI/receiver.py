@@ -5,15 +5,13 @@
 #  in conjunction with Tcl version 8.6
 #    May 20, 2021 04:07:12 AM CEST  platform: Windows NT
 
+# Standard modules
 import sys
-
 import tkinter as tk
-
-# import tkinter.ttk as ttk
-# import tkinter.font as Tkfont
-
-import receiver_support
 import os.path
+
+# Local files
+import receiver_support
 
 
 def vp_start_gui():
