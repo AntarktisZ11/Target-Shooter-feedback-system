@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-# Standard modules
+# Standard Library
 import importlib
 import os
 import sys
 from typing import List
 
-# Local files
+# First-Party
 import update_function
 
 
@@ -22,7 +22,8 @@ def run() -> List[str]:
         List[str]: List of all files which had been changed or added
     """
     importlib.reload(update_function)
-    from update_function import Updater, RECEIVER_FILES
+    # First-Party
+    from update_function import RECEIVER_FILES, Updater
 
     print("Pre-check")
     if Updater.connected():

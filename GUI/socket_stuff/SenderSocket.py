@@ -1,9 +1,15 @@
-# Standard modules
+# Standard Library
 from typing import Optional
 
-# Local files
-from .BaseSocket import BaseSocket, socket, select, Tk, SELECT_FUNC_TIMEOUT
+# First-Party
 import sender_extra_windows as windows
+from BaseSocket import (
+    SELECT_FUNC_TIMEOUT,
+    BaseSocket,
+    Tk,
+    select,
+    socket,
+)
 
 MAX_ATTEMPTS = 50
 ROOT_UPDATE_RATE = 10  # inverse relationship

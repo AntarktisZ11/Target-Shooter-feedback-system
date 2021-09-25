@@ -1,8 +1,8 @@
-# Standard modules
-from typing import List, Optional
+# Standard Library
 import os
+from typing import List, Optional
 
-# Third party modules
+# Third-Party
 import matplotlib.pyplot as plt
 import numpy as np
 

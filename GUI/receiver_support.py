@@ -5,20 +5,20 @@
 #  in conjunction with Tcl version 8.6
 #    May 20, 2021 03:37:04 AM CEST  platform: Windows NT
 
-# Standard modules
-from abc import ABC, abstractmethod
-from enum import Enum, auto
-import sys
+# Standard Library
+import datetime
 import os
 import pickle
-import datetime
+import sys
 import tkinter as tk
+from abc import ABC, abstractmethod
+from enum import Enum, auto
 
-# Third party modules
+# Third-Party
 import pandas as pd
 
-# Local files
-import figureGen  # Local file
+# First-Party
+import figureGen
 from socket_stuff import ReceiverSocket
 
 
@@ -399,6 +399,7 @@ def destroy_window():
 
 
 if __name__ == "__main__":
+    # First-Party
     import receiver
 
     receiver.vp_start_gui()

@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
-import socket
+# Standard Library
 import select
+import socket
 import sys
-from tkinter import Tk  # For Type hint
+from abc import ABC, abstractmethod
+from tkinter import Tk  # For Type hint only
 from typing import List, Tuple
-
 
 MAX_INFO_LENGTH = 8  # characters
 PACKET_LEN_VAR_SIZE = 2  # bytes

@@ -8,13 +8,13 @@
 
 # * export PATH=/path/to/script:$PATH
 
-import sys
+# Standard Library
 import os
-from typing import List
-import urllib.request  # the lib that handles the url stuff
+import sys
 import urllib.error  # for error handling
+import urllib.request  # the lib that handles the url stuff
 from time import sleep
-
+from typing import List
 
 # * Is self-updating
 # ! Does not remove any files

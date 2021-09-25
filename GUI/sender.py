@@ -7,15 +7,15 @@
 
 # ! Made for python 3.7 and 3.8
 
-# Standard modules
+# Standard Library
 import sys
 import tkinter as tk
-import tkinter.ttk as ttk
 import tkinter.font as Tkfont
+import tkinter.ttk as ttk
 
-# Local files
-import sender_support
+# First-Party
 import sender_extra_windows as windows
+import sender_support
 
 
 def vp_start_gui():
@@ -382,6 +382,7 @@ class Toplevel1:
 # Modified by Antarktis to add enabling/disabling of tooltip
 # ======================================================
 
+# Standard Library
 from time import time
 
 

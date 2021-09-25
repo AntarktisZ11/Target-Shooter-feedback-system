@@ -1,13 +1,13 @@
-# Standard modules
-import sys
+# Standard Library
 import os
 import shutil
+import sys
 import tkinter as tk
 import tkinter.ttk as ttk
 
-# Third party modules
-import pandas as pd
+# Third-Party
 import numpy as np
+import pandas as pd
 
 
 def init_globals(top, gui, program_location, user_list):
@@ -263,8 +263,11 @@ def close_point_window():
 
 
 class PrintWindow(PointWindow):
-    import pdflatex  # Local file
+    # Third-Party
     import jinja2
+
+    # First-Party
+    import pdflatex
 
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
@@ -352,6 +355,7 @@ class PrintWindow(PointWindow):
     def print_pdf(self):
         pdf_fullpath = self.make_pdf()
         if sys.platform == "linux":
+            # Third-Party
             import cups
 
             conn = cups.Connection()

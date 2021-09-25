@@ -10,18 +10,18 @@
 #    May 19, 2021 05:30:26 PM CEST  platform: Windows NT
 #    May 19, 2021 05:56:42 PM CEST  platform: Windows NT
 
-# Standard modules
-import sys
+# Standard Library
 import os
 import pickle
-from io import StringIO
+import sys
 import tkinter as tk
+from io import StringIO
 
-# Third party modules
-import pandas as pd
+# Third-Party
 import numpy as np
+import pandas as pd
 
-# Local files
+# First-Party
 import figureGen
 import sender_extra_windows as windows
 from socket_stuff import SenderSocket
@@ -457,6 +457,7 @@ def destroy_window():
 
 
 if __name__ == "__main__":
+    # First-Party
     import sender
 
     sender.vp_start_gui()

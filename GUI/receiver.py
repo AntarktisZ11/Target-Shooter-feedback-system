@@ -5,12 +5,12 @@
 #  in conjunction with Tcl version 8.6
 #    May 20, 2021 04:07:12 AM CEST  platform: Windows NT
 
-# Standard modules
+# Standard Library
+import os.path
 import sys
 import tkinter as tk
-import os.path
 
-# Local files
+# First-Party
 import receiver_support
 
 

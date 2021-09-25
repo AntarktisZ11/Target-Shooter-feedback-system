@@ -1,7 +1,8 @@
+# Standard Library
 import os
 import shutil
-import tempfile
 import subprocess
+import tempfile
 from subprocess import PIPE
 
 MODE_BATCH = 0

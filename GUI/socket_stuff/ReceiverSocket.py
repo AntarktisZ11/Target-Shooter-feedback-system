@@ -1,9 +1,9 @@
-# Standard modules
+# Standard Library
 from typing import Optional
 
-# Local files
-from .BaseSocket import BaseSocket, socket, Tk
+# First-Party
 import receiver_support
+from BaseSocket import BaseSocket, Tk, socket
 
 
 class ReceiverSocket(BaseSocket):
