@@ -1,0 +1,39 @@
+\documentclass[a5paper, landscape, 12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{setspace}
+\usepackage[showseconds=false, showzone=false, datesep=/]{datetime2}
+\usepackage[marginparsep=0pt, marginparwidth=0pt]{geometry}
+
+\pagenumbering{gobble} 
+
+\begin{document}
+\Large
+
+
+\noindent
+\begin{minipage}[h]{0.7\textwidth}
+    \vspace{2cm}
+    Bortans Jaktskyttebana\\
+    Resultat\\ \\
+    \onehalfspacing
+    \begin{tabular}{l @{\hspace{0.7cm}} l @{\hspace{1cm}} c c c c}
+        1 & St. & 3 & 3 & 4 & $5^{1}$ \\
+        2 & J.  & 4 & 5 & 5 & $5^{1}$ \\
+        3 & L.  & 3 & 4 & 5 & $5^{1}$ \\
+        4 & D.  & X & 0 & 3 & 5 
+    \end{tabular}
+    \vspace{2cm}
+\end{minipage}
+\begin{minipage}[h]{0.3\textwidth}
+    \begin{tabular}{l}
+    	Skjutledare: \\
+    	L-O Nilsson \\ \\
+    	Skytt: \\
+    	Marcus Börne \\ \\
+    	Datum: \\
+    	\DTMnow \\
+	\end{tabular}
+\end{minipage}
+
+\end{document}
