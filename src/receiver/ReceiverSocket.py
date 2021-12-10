@@ -3,7 +3,9 @@ from typing import Optional
 
 # First-Party
 import receiver_support
-from BaseSocket import BaseSocket, Tk, socket
+
+# Local Folder
+from .BaseSocket import BaseSocket, Tk, socket
 
 
 class ReceiverSocket(BaseSocket):

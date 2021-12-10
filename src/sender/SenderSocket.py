@@ -3,7 +3,9 @@ from typing import Optional
 
 # First-Party
 import sender_extra_windows as windows
-from BaseSocket import (
+
+# Local Folder
+from .BaseSocket import (
     SELECT_FUNC_TIMEOUT,
     BaseSocket,
     Tk,
