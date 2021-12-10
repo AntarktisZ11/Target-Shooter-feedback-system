@@ -267,7 +267,7 @@ class PrintWindow(PointWindow):
     import jinja2
 
     # First-Party
-    import pdflatex
+    from sender import pdflatex
 
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
@@ -343,7 +343,7 @@ class PrintWindow(PointWindow):
             data_frame_values=self.get_formated_df(user),
             leader_name=self.leader_name,
             shooter_name=self.format_name(user),
-            date=r"\today\ \currenttime",
+            date=r"\DTMnow",
         )
 
         save_location = os.path.join(prog_location, "PDFs")

@@ -1,9 +1,15 @@
 # Standard Library
-import os
+import logging  # Dev-tool
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 from subprocess import PIPE
+
+# Third-Party
+from jinja2 import Template
+
+LOGGER = logging.getLogger(__name__)  # Dev-tool
 
 MODE_BATCH = 0
 MODE_NON_STOP = 1
@@ -30,70 +36,96 @@ class PDFLaTeX:
     Modified by Antarktis 2021-07-01
     """
 
-    def __init__(self, latex_src, job_name: str):
-        self.latex = latex_src
+    def __init__(self, tex_src_bin, job_name: str):
+        self.verify_install()
+        self.tex_src_bin = tex_src_bin
         self.job_name = job_name
-        self.interaction_mode = INTERACTION_MODES[MODE_BATCH]
-        self.dir = None
+        self.interaction_mode = INTERACTION_MODES[MODE_NON_STOP]
+        self.dst = None
         self.pdf_filename = None
         self.params = dict()
         self.pdf = None
         self.log = None
 
+    @staticmethod
+    def verify_install():
+        """Check whether pdflatex tool is on PATH and marked as executable.
+
+        Raises:
+            FileNotFoundError: pdflatex could not be found on PATH
+
+        Returns:
+            bool: True if it is installed
+        """
+        if shutil.which("pdflatex") is None:  # pragma: no cover
+            raise shutil.ExecError("Aborting! pdflatex could not be found on PATH")
+        else:
+            return True
+
     @classmethod
-    def from_texfile(cls, filename):
-        prefix = os.path.basename(filename)
-        prefix = os.path.splitext(prefix)[0]
-        with open(filename, "r", encoding="utf8") as f:
-            formated_src = ""
-            for line in f.read():
-                formated_src += line.replace("\n", " ")
-            return cls.from_binarystring(formated_src.encode(), prefix)
+    def from_texfile(cls, file: Path):
+        formated_src = file.read_text().replace("\n", " ")
+        return cls.from_binarystring(formated_src.encode(), file.stem)
 
     @classmethod
     def from_binarystring(cls, binstr: str, jobname: str):
         return cls(binstr, jobname)
 
     @classmethod
-    def from_jinja2_template(cls, jinja2_template, jobname: str = None, **render_kwargs):
+    def from_jinja2_template(cls, jinja2_template: Template, jobname: str = None, **render_kwargs):
         tex_src = jinja2_template.render(**render_kwargs)
-        tex_src_bin = str(tex_src).replace("\n", " ").encode()
+        tex_src_bin = tex_src.replace("\n", " ").encode()
         fn = jobname
 
         if fn is None:
             fn = jinja2_template.filename
             if not fn:
                 raise ValueError(
-                    "PDFLaTeX: if jinja template does not have attribute 'filename' set, " "'jobname' must be provided"
+                    "PDFLaTeX: if jinja template does not have attribute 'filename' set, 'jobname' must be provided"
                 )
         return cls(tex_src_bin, fn)
 
-    def create_pdf(self, keep_pdf_file: bool = False, keep_log_file: bool = False, env: dict = None, dir: str = None):
+    def create_pdf(self, keep_pdf_file: bool = False, keep_log_file: bool = False, env: dict = None, dst: Path = None):
         if self.interaction_mode is not None:
             self.add_args({"-interaction": self.interaction_mode})
 
-        # dir = self.params.get('-output-directory')
+        self.add_args({"--file-line-error": None})  # output c style errors
+
+        # dst = self.params.get('-output-directory')
         filename = self.params.get("-jobname")
 
         if filename is None:
             filename = self.job_name
-        if dir is None:
-            dir = ""
+        if dst is None:
+            dst = Path("")
 
         with tempfile.TemporaryDirectory() as td:
             self.set_output_directory(td)
             self.set_jobname("file")
 
             args = self.get_run_args()
-            fp = subprocess.run(args, input=self.latex, env=env, timeout=300, stdout=PIPE, stderr=PIPE)
-            with open(os.path.join(td, "file.pdf"), "rb") as f:
-                self.pdf = f.read()
-            with open(os.path.join(td, "file.log"), "rb") as f:
-                self.log = f.read()
-            if keep_log_file:
-                shutil.move(os.path.join(td, "file.log"), os.path.join(dir, filename + ".log"))
+            fp = subprocess.run(args, input=self.tex_src_bin, env=env, timeout=300, stdout=PIPE, stderr=PIPE)
+
+            if fp.returncode != 0:  # pragma: no cover
+                LOGGER.warning(fp.args)
+                LOGGER.warning(fp.stdout.decode())
+            LOGGER.debug(subprocess.run(["ls", "-R", "/tmp"]))
+            LOGGER.debug(subprocess.run(["tail", f"{td}/file.log"]))
+            LOGGER.debug(subprocess.run(["tail", f"{td}/file.aux"]))
+
+            temp_pdf = Path(td, "file.pdf")
+            self.pdf = temp_pdf.read_bytes()
+
+            temp_log = Path(td, "file.log")
+            self.log = temp_log.read_bytes()
+
             if keep_pdf_file:
-                shutil.move(os.path.join(td, "file.pdf"), os.path.join(dir, filename + ".pdf"))
+                target_pdf = dst.joinpath(filename).with_suffix(".pdf")
+                shutil.move(temp_pdf, target_pdf)
+
+            if keep_log_file:
+                target_log = dst.joinpath(filename).with_suffix(".log")
+                shutil.move(temp_log, target_log)
 
         return self.pdf, self.log, fp
 
@@ -106,27 +138,11 @@ class PDFLaTeX:
         for k in params:
             self.params[k] = params[k]
 
-    def del_args(self, params):
-        if isinstance(params, str):
-            params = [params]
-
-        if isinstance(params, dict) or isinstance(params, list):
-            for k in params:
-                if k in self.params.keys():
-                    del self.params[k]
-        else:
-            raise ValueError("PDFLaTeX: del_cmd_params: parameter must be str, dict or list.")
-
-    def set_output_directory(self, dir: str = None):
-        self.generic_param_set("-output-directory", dir)
+    def set_output_directory(self, dst: str = None):
+        self.generic_param_set("-output-directory", dst)
 
     def set_jobname(self, jobname: str = None):
         self.generic_param_set("-jobname", jobname)
-
-    def set_output_format(self, fmt: str = None):
-        if fmt and fmt not in ["pdf", "dvi"]:
-            raise ValueError("PDFLaTeX: Format must be either 'pdf' or 'dvi'.")
-        self.generic_param_set("-output-format", dir)
 
     def generic_param_set(self, param_name, value):
         if value is None:
@@ -134,26 +150,3 @@ class PDFLaTeX:
                 del self.params[param_name]
         else:
             self.params[param_name] = value
-
-    def set_pdf_filename(self, pdf_filename: str = None):
-        self.set_jobname(pdf_filename)
-
-    def set_batchmode(self, on: bool = True):
-        self.interaction_mode = INTERACTION_MODES[MODE_BATCH] if on else None
-
-    def set_nonstopmode(self, on: bool = True):
-        self.interaction_mode = INTERACTION_MODES[MODE_NON_STOP] if on else None
-
-    def set_scrollmode(self, on: bool = True):
-        self.interaction_mode = INTERACTION_MODES[MODE_SCROLL] if on else None
-
-    def set_errorstopmode(self, on: bool = True):
-        self.interaction_mode = INTERACTION_MODES[MODE_ERROR_STOP] if on else None
-
-    def set_interaction_mode(self, mode: int = None):
-        if mode is None:
-            self.interaction_mode = None
-        elif 0 <= mode <= 3:
-            self.interaction_mode = INTERACTION_MODES[mode]
-        else:
-            raise ValueError("PDFLaTeX: Invalid interaction mode!")
